@@ -1,0 +1,233 @@
+#--------------------------------------------------------------------------------------------
+#
+#           chunk1: estimate heritability and genetic correlaiton
+#
+#--------------------------------------------------------------------------------------------
+#get h2 for multiple traits
+phenotypes=("amed2" "ahei2" "dash2" "pdi2" "hpdi2" "updi2" "edip2" "edih2")
+cohorts=("NHS" "WHI" "SOL")
+
+for cohort in "${cohorts[@]}"; do
+	for phenotype in "${phenotypes[@]}"; do
+	./ldsc.py --h2 "$cohort"/munged/"$phenotype".sumstats.gz \
+    --ref-ld-chr eur_w_ld_chr/ \
+    --w-ld-chr eur_w_ld_chr/ \
+    --out "$cohort"/h2/"$phenotype"
+	done
+done
+
+#munge outcome and exposure (METAL) summary data
+phenotypes=("T2D" "Pro" "ISI" "IFC" "amed2" "ahei2" "dash2" "pdi2" "hpdi2" "updi2" "edip2" "edih2")
+
+for phenotype in "${phenotypes[@]}"; do
+	./munge_sumstats.py \
+    --out munged/"$phenotype" \
+    --merge-alleles w_hm3.snplist \
+    --chunksize 500000 \
+    --a1 ALT \
+    --a2 REF \
+    --snp SNP \
+    --sumstats MR/"$phenotype"_1KGP.hg19.txt
+done 
+
+#get rg for multiple traits
+phenotypes=("T2D" "Pro" "ISI" "IFC")
+
+for phenotype in "${phenotypes[@]}"; do
+	./ldsc.py \
+	--rg "$phenotype".sumstats.gz,amed2.sumstats.gz,ahei2.sumstats.gz,dash2.sumstats.gz,pdi2.sumstats.gz,hpdi2.sumstats.gz,updi2.sumstats.gz,edip2.sumstats.gz,edih2.sumstats.gz \
+	--ref-ld-chr ldsc_tools/eur_w_ld_chr/ \
+	--w-ld-chr eur_w_ld_chr/ \
+	--out rg/"$phenotype"
+done
+
+#--------------------------------------------------------------------------------------------
+#
+#           chunk2: TWAS analysis
+#
+#--------------------------------------------------------------------------------------------
+for tissue in ./WEIGHTS/*.pos; do
+name=$(basename "$tissue" .pos)
+for chr in {1..22}; do
+Rscript FUSION.assoc_test.R \
+--sumstats edip.sumstats \
+--weights $tissue \
+--weights_dir ./WEIGHTS/ \
+--ref_ld_chr ./LDREF/1000G.EUR. \
+--chr $chr \
+--out ./results/EDIP/${name}.chr${chr}.dat &
+  
+  while [ $(jobs -r | wc -l) -ge $max_jobs ]; do
+sleep 5
+done
+done
+done
+wait
+
+#--------------------------------------------------------------------------------------------
+#
+#           chunk3: colocalization
+#
+#--------------------------------------------------------------------------------------------
+gwas.p.threshold = 5e-8
+eqtl.p.threshold = 0.01
+gene.boundary.window.size = 1000000
+lead.snp.window.size = 500000
+gwas.response.type = "quant"
+coloc.p1 = 1e-04
+coloc.p2 = 1e-04
+coloc.p12 = 1e-05
+run.cojo = F
+cojo.maf = 0.001
+
+all_res_coloc = NULL
+
+for (i in 1:48) {
+  
+  tissue_file = tissue_list[i]
+  gene_list = fread(paste0(tissue_file, ".epi"))
+  eqtl_N = tissue_sumgtex$N[which(tissue_sumgtex$tissue == names[i])]
+  
+  for (row_i in 1:nrow(gene_list)) {
+    
+    # row_i = 1
+    row = gene_list[row_i,]
+    gene = row$V5
+    
+    
+    tmpfile = tempfile(pattern = paste0("file_", row_i, "_"), tmpdir = tempdir(), fileext = "")
+    cmd = paste0(smr_path, " --query ", eqtl.p.threshold, " --beqtl-summary ", tissue_file, " --gene ", gene, " --out ", tmpfile)
+    print(cmd)
+    system(cmd)
+    eqtl = fread(paste0(tmpfile, ".txt"))
+    unlink(paste0(tmpfile, ".txt"))
+    
+    common_snp = intersect(sumstat$SNP, eqtl$SNP)
+    
+    if (length(common_snp) == 0) return(NULL)
+    
+    eqtl_sub = eqtl %>%
+      filter(SNP %in% common_snp)
+    gwas_sub = sumstat %>%
+      filter(SNP %in% common_snp)
+    
+    d1 = list(
+      snp=gwas_sub$SNP, pvalues = gwas_sub$P,
+      beta = gwas_sub$BETA, varbeta = gwas_sub$SE^2,
+      N = round(median(gwas_sub$N, na.rm=T)),
+      # MAF = pmin(gwas_sub$FREQ, 1-gwas_sub$FREQ),
+      sdY = 1,
+      type = "quant"
+    )
+    
+    d2 = list(
+      snp=eqtl_sub$SNP, pvalues = eqtl_sub$p,
+      beta = eqtl_sub$b, varbeta = eqtl_sub$SE^2,
+      N = eqtl_N,
+      sdY = 1,
+      type = "quant"
+    )
+    
+    coloc_res = tryCatch.W.E(coloc.abf(
+      dataset1=d1, 
+      dataset2=d2, 
+      p1=coloc.p1,p2=coloc.p2,p12=coloc.p12))
+    
+    warn = inherits(coloc_res$warning,"warning")
+    error = inherits(coloc_res$value,"error")
+    
+    if (error) { 
+      # message(paste0("Error: ", tissue_name_i, ": ", tissue)); 
+      return(NULL)
+    } else {
+      
+      coloc_res_tmp = data.frame(
+        trait = trait,
+        tissue = names[i],
+        as.data.frame(t(coloc_res$value[[1]]))
+      )
+    }
+    all_res_coloc = rbind(all_res_coloc, coloc_res_tmp)
+  }
+  fwrite(all_res_coloc, paste0("coloc_", trait, "_", ".txt"), row.names=F, quote=F, sep="\t")
+}
+
+writeLines("Finished all")
+
+#--------------------------------------------------------------------------------------------
+#
+#           chunk4: MR analysis
+#
+#--------------------------------------------------------------------------------------------
+for (i in 1:8){
+  
+  load(paste("LD.pruning.for.",name[i],".RData",sep=''))
+  
+  exposure = name[i]
+  
+  exp = mr_use[[i]][,c("SNP","CHR","BP","A1","A2","Beta","SE","P")]
+  names(exp)[6:8] = c("t1_Beta","t1_Se","t1_P")
+  
+  #outcome
+  outcome = "T2D"
+  
+  t2d <- t2d_1KGP.a[,c("SNP","CHR","BP","A1","A2","Beta","SE","P")]
+  names(t2d)[6:8] = c("t2_Beta","t2_Se","t2_P")
+  t2d$t2_Beta=-1*t2d$t2_Beta
+  
+  #merge exposure and outcome
+  if ( identical(exp[,2:5], t2d[,2:5]) ) {
+    X = cbind(exp, t2d[,c("t2_Beta","t2_Se","t2_P")])
+  } else{
+    X = merge(exp, t2d, by=c("CHR","BP","A1","A2"))
+  }
+  dim(X)
+  head(X)
+  tail(X)
+  
+  names(X)[5] <- "SNP"; names(X)[9] <- "rsid"
+  
+  #build MR analyses results file and paramaters
+  get = data.frame(exp=NA,out=NA,p.thr=NA,snpno=NA,
+                   IVW_beta=NA,  IVW_se=NA,  IVW_p=NA,    # 6:8
+                   MBE_beta=NA,  MBE_se=NA,  MBE_p=NA,    # 9:11
+                   WMed_beta=NA, WMed_se=NA, WMed_p=NA,   # 12:14
+                   Egger_beta=NA,Egger_se=NA,Egger_p=NA)  # 15:17
+  
+  for (j in 3:3) {
+    # Get SNP list
+    glist = as.vector(PRUNED.a[[j]])
+    glist = glist[!is.na(glist)]
+    # Make MRInput object
+    Xj = X[which(X$SNP %in% glist),] %>% as.data.frame()
+    Xj_Input = mr_input(bx   = Xj[,"t1_Beta"],
+                        bxse = Xj[,"t1_Se"],
+                        by   = Xj[,"t2_Beta"],
+                        byse = Xj[,"t2_Se"],
+                        snps = Xj[,"SNP"],
+                        effect_allele = Xj[,"A1"],
+                        other_allele  = Xj[,"A2"])
+    # Run MR analysess
+    MRfit_ivw   = mr_ivw(Xj_Input)
+    MRfit_mbe   = mr_mbe(Xj_Input)
+    MRfit_wmed  = mr_median(Xj_Input)
+    MRfit_egger = mr_egger(Xj_Input)
+    # Save results -- model info
+    get[j,"exp"] = exposure
+    get[j,"out"] = outcome
+    get[j,"p.thr"] = c(1e-5,1e-6,5e-8)[j]
+    get[j,"snpno"] = length(glist)
+    # Save results -- IVW
+    get[j,5:7] = c(MRfit_ivw$Estimate, MRfit_ivw$StdError, MRfit_ivw$Pvalue)
+    # Save results -- MBE
+    get[j,8:10] = c(MRfit_mbe$Estimate, MRfit_mbe$StdError, MRfit_mbe$Pvalue)
+    # Save results -- Median
+    get[j,11:13] = c(MRfit_wmed$Estimate, MRfit_wmed$StdError, MRfit_wmed$Pvalue)
+    # Save results -- Egger
+    get[j,14:16] = c(MRfit_egger$Estimate, MRfit_egger$StdError.Est, MRfit_egger$Pvalue.Est)
+    write.csv(get, file=paste("MR_", name[i], "_T2D.csv", sep=''))
+  }
+  
+  print(paste("Completed 1 -- ", i, "/ 8 for", exposure, "-->", outcome, sep=" "))
+  
+}
