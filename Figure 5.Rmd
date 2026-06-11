@@ -31,8 +31,6 @@ for phenotype in "${phenotypes[@]}"; do
 done 
 
 #get rg for multiple traits
-phenotypes=("T2D" "Pro" "ISI" "IFC")
-
 for phenotype in "${phenotypes[@]}"; do
 	./ldsc.py \
 	--rg "$phenotype".sumstats.gz,amed2.sumstats.gz,ahei2.sumstats.gz,dash2.sumstats.gz,pdi2.sumstats.gz,hpdi2.sumstats.gz,updi2.sumstats.gz,edip2.sumstats.gz,edih2.sumstats.gz \
