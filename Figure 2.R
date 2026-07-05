@@ -12,10 +12,10 @@ library(cvTools)
 #--------------------------------------------------------------------------------------------
 #read data
 load("model_training_sample.RData")
-train_sample[1:5,1:5] #training set
-test_sample[1:5,1:5] #testing set
 
-#check data
+train_sample[1:5,1:5] #training set
+test_sample[1:5,1:5]  #testing set
+
 dim(train_sample) 
 dim(test_sample) 
 
