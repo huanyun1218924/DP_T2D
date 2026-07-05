@@ -13,17 +13,15 @@ load("Final_LVS_SOLNASData.RData")
 #           chunk1: model training
 #
 #--------------------------------------------------------------------------------------------
-LVS.final[1:5,1:5] #training set
-SOLNAS.final[1:5,1:5] #testing set
+train_sample[1:5,1:5] #training set
+test_sample[1:5,1:5] #testing set
 
-dim(LVS.final) #1209,286
-dim(SOLNAS.final) #416,286
+dim(train_sample) 
+dim(test_sample) 
 
-trainingset = as.data.frame(LVS.final)
-testingset = as.data.frame(SOLNAS.final)
-met = as.character(names(LVS.final)[320:605])
-
-trainingset$folds=sample(c(rep(1,200),rep(2,201),rep(3,101),rep(4,101),rep(5,101),rep(6,101),rep(7,101),rep(8,101),rep(9,101),rep(10,101)))
+trainingset = as.data.frame(train_sample)
+testingset = as.data.frame(test_sample)
+met = as.character(names(train_sample)[10:295])
 
 #repeat for 500 times with all the predictions
 record = data.frame(repNo=NA,NoMetabs=NA,sol_cor=NA)
