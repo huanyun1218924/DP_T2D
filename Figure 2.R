@@ -5,17 +5,17 @@ library(ggplot2)
 library(glmnet)
 library(cvTools)
 
-#read LVS metabolome data
-load("Final_LVS_SOLNASData.RData")
-
 #--------------------------------------------------------------------------------------------
 #
 #           chunk1: model training
 #
 #--------------------------------------------------------------------------------------------
+#read data
+load("model_training_sample.RData")
 train_sample[1:5,1:5] #training set
 test_sample[1:5,1:5] #testing set
 
+#check data
 dim(train_sample) 
 dim(test_sample) 
 
@@ -23,7 +23,7 @@ trainingset = as.data.frame(train_sample)
 testingset = as.data.frame(test_sample)
 met = as.character(names(train_sample)[10:295])
 
-#repeat for 500 times with all the predictions
+#repeat elastic net for 500 times with all the predictions
 record = data.frame(repNo=NA,NoMetabs=NA,sol_cor=NA)
 pdf("TestingPlots_AMED.pdf",width=8, height=24)
 
