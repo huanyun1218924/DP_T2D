@@ -250,40 +250,15 @@ col_fun = colorRamp2(
   colors = brewer.pal(9, "RdBu")
 )
 
-row_ha<-rowAnnotation(foo = substr(t2d_lab$sig, 1 , 1),
-                      col = list(foo = c("a" = "#EE6A50", "b" = "#4F81BD", "c" = "grey"),gp = gpar(col = "black")),
-                      annotation_name_side = "bottom",
-                      annotation_name_rot=90,
-                      annotation_legend_param = list(foo = list(title = "With T2D",labels = c("Positive","Negative","Non-significant"),labels_gp = gpar(fontfamily = "calibri", fontsize = 9),title_gp  = gpar(fontfamily = "calibri", fontface = "bold", fontsize = 10))),
-                      annotation_label = "T2D",
-                      annotation_name_gp = gpar(fontmaily="calibri",fontsize=9,fontface="bold"),
-                      simple_anno_size = unit(0.2, "cm")) #trait classification
-
-col_ha<-columnAnnotation(foo = substr(anno_lab$phylum, 1 , 1),
-                      col = list(foo = c("a" = "#00b0f0", "b" = "#95a2ff", "f" = "#00b050", "p" = "#ffc000"),gp = gpar(col = "black")),
-                      annotation_name_side = "right",annotation_name_rot=0,
-                      annotation_legend_param = list(foo = list(title = "Phylum",labels = c("Actinobacteria","Bacteroidetes","Firmicutes","Proteobacteria"),labels_gp = gpar(fontfamily = "calibri", fontsize = 9),title_gp  = gpar(fontfamily = "calibri", fontface = "bold", fontsize = 10))),
-                      annotation_label = "Phylum",
-                      annotation_name_gp = gpar(fontmaily="calibri",fontsize=9,fontface="bold"),
-                      simple_anno_size = unit(0.2, "cm")) #trait classification
-
-col_ha2 <- columnAnnotation("Prevalence" = anno_barplot(pre_lab$Prevalance,border=TRUE,gp = gpar(fill = "#95a2ff",col="#95a2ff"),bar_width = 0.8),
-                            annotation_name_side = "left",
-                            annotation_name_rot=0,
-                            annotation_label = NULL,
-                            annotation_name_gp = gpar(fontmaily="calibri",fontsize=10,fontface="bold"),
-                            col=list(c = ("grey90"),gp = gpar(col = "white"))) #overall h2
-
-Heatmap(coef_f, 
+ht <- Heatmap(coef, 
         col=col_fun,
         rect_gp = gpar(col = "grey50", lwd = 1),
         row_names_side = "left",
         row_names_gp = gpar(fontsize = 8.5,fontfamily = "Calibri"),  
         column_names_gp = gpar(fontsize = 8.5,fontfamily = "Calibri"),
-        row_split = c(rep('A',each=8),rep('B',each=8),rep('C',each=ncol(coef)-16)),
         row_gap = unit(2, "mm"),
         show_row_dend = FALSE,
-        row_order = order(as.numeric(gsub("row", "", rownames(coef_f)))),
+        row_order = order(as.numeric(gsub("row", "", rownames(coef)))),
         row_title = NULL,
         column_names_side = "bottom", 
         column_names_rot = 50,
@@ -291,20 +266,9 @@ Heatmap(coef_f,
         width  = unit(11.5, "cm"),
         height = unit(15.5, "cm"),
         show_column_dend = FALSE,
-        bottom_annotation = col_ha,
-        top_annotation = col_ha2,
-        left_annotation = row_ha,
-        column_order = order(as.numeric(gsub("column", "", colnames(coef_f)))),
-        #column_split = LETTERS[1:dim(htmap_coef)[2]],
+        column_order = order(as.numeric(gsub("column", "", colnames(coef)))),
         column_title = NULL,
-        heatmap_legend_param = list(title = "Coefficient",labels_gp = gpar(fontfamily = "calibri", fontsize = 9),title_gp  = gpar(fontfamily = "calibri", fontface = "bold", fontsize = 10)),
-        cell_fun = function(j, i, x, y, w, h, fill) {
-          if(pval[i, j] <= 0.05) {
-            grid.text("**", x, y,gp = gpar(fontsize = 8, fontfamily="calibri",color="grey30"))
-          } else if(pval2[i, j] <= 0.05) {
-            grid.text("*", x, y,gp = gpar(fontsize = 8, fontfamily="calibri",color="grey30"))
-          }
-        }
+        heatmap_legend_param = list(title = "Coefficient",labels_gp = gpar(fontfamily = "calibri", fontsize = 9),title_gp  = gpar(fontfamily = "calibri", fontface = "bold", fontsize = 10))
 )
 
 png("Diet_GMB_Met.png",width = 2500, height = 3000, res = 300)
@@ -313,14 +277,3 @@ draw(ht,
      heatmap_legend_side = "right",
      annotation_legend_side = "right")
 dev.off()
-
-ggplot(df, aes(x = group, y = item, size = PM, fill = group)) +
-  geom_point(shape = 21, color = "black", alpha = 0.7) +
-  geom_text(aes(label = paste(value,"%",sep='')), family="Calibri",size = 2, color = "black") +
-  scale_fill_manual(values = c("AMED" = "#6A5ACD", "AHEI" = "#9370DB", "DASH" = "#BA55D3", "hPDI" = "#DDA0DD", "uPDI" = "#D8BFD8"))+
-  scale_size_continuous(range = c(3, 10)) +
-  theme_bw() +
-  theme(axis.title = element_blank(),
-        panel.grid=element_blank(),
-        legend.position = "bottom",
-        axis.text = element_text(size=9,color="black",family="calibri"))
