@@ -4,6 +4,11 @@ library(ggplot2)
 library(cowplot)
 library(coxme)
 library(metafor)
+library(circlize)
+library(RColorBrewer)
+library(tidyr)
+library(ComplexHeatmap)
+library(gridExtra)
 
 #define functions to be used
 inormal <- function(x){
@@ -153,7 +158,7 @@ plots<- list()
 
 for (i in 1:16) {
 
-  formula_text <- paste("Surv(ptime_diabetes, diabetes) ~",exposures[i],"+ ageyr + fast + aspirinuse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp + BMIcont", sep='')
+  formula_text <- paste("Surv(ptime_diabetes, diabetes) ~",exposures[i],"+ ageyr + fast + aspirinuse + as.factor(smoking) + act + fhxdb + phxchol + phxhbp + BMIcont", sep='')
   fit <- coxph(as.formula(formula_text), data=data_use)
   ph <- cox.zph(fit,transform = "identity")
   ph_p <- ph$table[exposures[i],"p"]
@@ -287,20 +292,33 @@ res3$Trait <- rep(c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH"),each
 res3$Type <- "Per SD"
 res3$Model <- rep(c("Age","MV","MV+BMI"),times=8)
 
-res1_n1 <- res1  
-res2_n1 <- res2
-res3_n1 <- res3
-
 #--------------------------------------------------------------------------------------------
 #
 #           chunk3: mediation analysis
 #
 #--------------------------------------------------------------------------------------------
-#define exposure for use
-exp_x = "amed_av"
+#define dataset for use
+data <- t2d_sample
+
+#define exposure for use. here we use AMED as an example
+exp = "amed_av"
+
+#define covariate
+adj_covar <- c("ageyr","aspirinuse","fhxdb","antihluse","smoking","act","phxchol","phxhbp","energy","BMIcont")
 
 #define mediator
-metab_names <- 
+amed0 <- na.omit(sig_list[,1:2]); amed <- data.frame(amed0[,-1]); rownames(amed) <- amed0[,1]
+ahei0 <- na.omit(sig_list[,4:5]); ahei <- data.frame(ahei0[,-1]); rownames(ahei) <- ahei0[,1]
+dash0 <- na.omit(sig_list[,7:8]); dash <- data.frame(dash0[,-1]); rownames(dash) <- dash0[,1]
+opdi0 <- na.omit(sig_list[,10:11]); opdi <- data.frame(opdi0[,-1]); rownames(opdi) <- opdi0[,1]
+hpdi0 <- na.omit(sig_list[,13:14]); hpdi <- data.frame(hpdi0[,-1]); rownames(hpdi) <- hpdi0[,1]
+updi0 <- na.omit(sig_list[,16:17]); updi <- data.frame(updi0[,-1]); rownames(updi) <- updi0[,1]
+edip0 <- na.omit(sig_list[,19:20]); edip <- data.frame(edip0[,-1]); rownames(edip) <- edip0[,1]
+edih0 <- na.omit(sig_list[,22:23]); edih <- data.frame(edih0[,-1]); rownames(edih) <- edih0[,1]
+
+names(amed0)[1] <- names(ahei0)[1] <- names(dash0)[1] <- names(opdi0)[1] <- names(hpdi0)[1] <- names(updi0)[1] <- names(edip0)[1] <- names(edih0)[1] <- "HMDB"
+
+metab_names <- amed0[-1,]$HMDB #metabolites in the AMED signature
 
 #inverse-normal transformation
 data[,c(exp,metab_names)] <- apply(data[,c(exp,metab_names)],2,inormal)
@@ -325,13 +343,7 @@ for(i in 1:length(metab_names)){
   dati =data[,c(exp_x,metab_names[i],"ptime_diabetes","diabetes",adj_covar)] #note: mediator,exposure,outcome,event can not be NA
   dati = dati[complete.cases(dati),]
   
-  adj_covar_use = c("ageyr","actcont","totenergy_av","BMIcont")
-  
-  
-  #add study
-  if(length(unique(dati$studycaco))>1) {
-    adj_covar_use = c(adj_covar_use,"studycaco")
-  } 
+  adj_covar_use = c("ageyr","act","energy","BMIcont")
   
   #add fast
   if(length(unique(dati$fast))>1) {
@@ -378,7 +390,7 @@ for(i in 1:length(metab_names)){
                       model = "rb", 
                       outcome = "ptime_diabetes",          
                       event = "diabetes",                   
-                      exposure = exp_x,                   
+                      exposure = exp,                   
                       mediator = med_list,          
                       basec = c(adj_covar_use), 
                       EMint = FALSE,
@@ -404,19 +416,20 @@ singlemed_test_result_save <- do.call(rbind.data.frame,singlemed_test_result)
 
 singlemed_test_result_save <- singlemed_test_result_save %>% group_by(rowname) %>% mutate(fdr=p.adjust(`P.val`,"BH"))
 
-singlemed_test_result_save$exposure<-exp_x
+singlemed_test_result_save$exposure<-exp
 singlemed_test_result_save$type<-"Single_mediator"
+
+rm(list = ls())
 
 #--------------------------------------------------------------------------------------------
 #
 #           chunk4: plotting
 #
 #--------------------------------------------------------------------------------------------
-fig4 <- read.xlsx("data.xlsx")
+#plot quartile results
+t2d_demo$Diet <- factor(t2d_demo$Diet, levels = c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH"))
 
-fig4$Diet <- factor(fig4$Diet, levels = c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH"))
-
-p1 <- ggplot(fig4[which(fig4$Diet %in% c("AMED","AHEI","DASH","PDI")),], aes(x =exp(Est_Meta), y = Quartile, color=Type, fill=Type)) +
+p1 <- ggplot(t2d_demo, aes(x =exp(Est_Meta), y = Quartile, color=Type, fill=Type)) +
   geom_point(size = 4, shape=16,position = position_dodge(width = 8), width=1.2) +
   geom_errorbarh(aes(xmin = exp(Est_Meta-1.96*SE_Meta), xmax = exp(Est_Meta+1.96*SE_Meta)), position = position_dodge(width = 8),width=1.2,height = 0) +
   scale_colour_manual(values = c("#006EBE","#FA5555")) +
@@ -443,32 +456,55 @@ p1 <- ggplot(fig4[which(fig4$Diet %in% c("AMED","AHEI","DASH","PDI")),], aes(x =
         legend.title = element_blank()) +
   coord_flip()
 
-p2 <- ggplot(fig4[which(fig4$Diet %in% c("hPDI","uPDI","EDIP","EDIH")),], aes(x =exp(Est_Meta), y = Quartile, color=Type, fill=Type)) +
-  geom_point(size = 4, shape=16,position = position_dodge(width = 8), width=1.2) +
-  geom_errorbarh(aes(xmin = exp(Est_Meta-1.96*SE_Meta), xmax = exp(Est_Meta+1.96*SE_Meta)), position = position_dodge(width = 8),width=1.2,height = 0) +
-  scale_colour_manual(values = c("#006EBE","#FA5555")) +
-  #scale_x_continuous(limits=c(0.5,1.02), breaks=seq(0.5,1.02,0.1))+
-  scale_y_discrete(expand = expansion(mult = c(0, 0.01)))+
-  geom_vline(aes(xintercept = 1.0),colour="black",size=0.4) +
-  labs(title = "",x = "HR (95% CI)",y = "") +
-  facet_wrap(~Diet,scales="free",nrow=1) +
-  theme_classic()+
-  theme(legend.position = "none",
-        strip.background = element_blank(),
-        strip.text=element_blank(),
-        panel.grid = element_blank(),
-        panel.border = element_blank(),
-        plot.title = element_text(size=11,hjust=0.5,color="black"),
-        axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.line.x = element_blank(),
-        axis.text.y = element_text(size=11,color="black"),
-        axis.title = element_text(size=11,color="black"),
-        panel.spacing.x = unit(0.5, "cm"),
-        panel.spacing.y = unit(3, "cm"),
-        legend.title = element_blank()) +
-  coord_flip()
+ggsave("Figure4_1.png", plot = p1, width = 9, height = 2, dpi = 600)
 
-ggsave("Figure4_1_updated1.png", plot = p1, width = 9, height = 2, dpi = 600)
-ggsave("Figure4_1_updated2.png", plot = p2, width = 9, height = 2, dpi = 600)
+#plot mediation results
+coef <- med_demo[,c(1:1,3:4)] %>%
+  pivot_wider(
+    names_from = name,   # column to spread into new columns
+    values_from = PM     # column containing values
+  ) %>% as.data.frame()
+
+rownames(coef) <- coef$Diet
+coef <- coef[,-1]
+
+col_fun = colorRamp2(
+  breaks = seq(0, 20, length.out = 8),  # Adjust range based on your data
+  colors = brewer.pal(8, "OrRd")
+)
+
+coef <- coef[c(3:3,6:6,2:2,4:4,1:1,5:5,8:8,7:7),]
+
+p2 <- Heatmap(coef, 
+              col=col_fun,
+              rect_gp = gpar(col = "grey70", lwd = 1),
+              row_names_side = "left",
+              row_names_gp = gpar(fontsize = 8,fontfamily = "Calibri"),  
+              column_names_gp = gpar(fontsize = 7,fontfamily = "Calibri"),
+              row_gap = unit(2, "mm"),
+              show_row_dend = FALSE,
+              row_order = order(as.numeric(gsub("row", "", rownames(coef)))),
+              row_title = NULL,
+              column_names_side = "bottom", 
+              column_names_rot = 60,
+              width  = unit(18, "cm"),
+              height = unit(5, "cm"),
+              na_col = "white",
+              show_column_dend = FALSE,
+              #bottom_annotation = col_ha,
+              column_order = order(as.numeric(gsub("column", "", colnames(coef)))),
+              column_title = NULL,
+              heatmap_legend_param = list(title = "Mediated proportion",labels_gp = gpar(fontfamily = "calibri", fontsize = 7),title_gp  = gpar(fontfamily = "calibri", fontface = "bold", fontsize = 7)),
+              cell_fun = function(j, i, x, y, width, height, fill) {
+                v <- coef[i, j]
+                if (!is.na(v)) {
+                  grid.text(print(v), x, y,gp = gpar(fontsize = 7, family="calibri",color="grey30"))
+                }
+              }
+)
+
+png("Figure4_2.png",width = 2600, height = 1200, res = 300)
+p2
+dev.off()
+
+rm(list = ls())
