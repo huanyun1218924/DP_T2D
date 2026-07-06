@@ -16,28 +16,37 @@ library(ComplexHeatmap)
 #           chunk1: identify signature-related microbial species
 #
 #--------------------------------------------------------------------------------------------
-Taxon_use_new_inv <- Taxon_use_new
+#read sample data
+load("micro_sample.RData")
 
-Phenotypes = setdiff(names(Taxon_use_new_inv),Microbiome)
+data_use <- micro_sample
 
+#define species for use
+Microbiome<-anno_sample$microNamePhenotypes = setdiff(names(data_use),Microbiome)
+
+#define exposures for use
 var_use <- c("amed","ahei","dash","pdi","hpdi","updi","edip","edih")
 
 met_name <- c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH")
 
-AdjVars = c("AGE_V2","GENDER_V2","CIGARETTE_USE_V2","ALCOHOL_USE_V2","GPAQ_TOTAL_MET","DIAB_FAMHIST","HIGH_TOTAL_CHOL2_V2","HYPERTENSION2_V2","BMI_V2")
+#define covariates for uese
+AdjVars = c("age_fec","bmi_bld","totMETs_paq","smoke_bld","probio_2m_fec","antibio_12m_fec","colsc_2m_fec","acid_2m_fec","stooltype_fec.1","stooltype_fec.2","stooltype_fec.3","stooltype_fec.4","stooltype_fec.5","stooltype_fec.6")
 
-Taxon_use_new_inv[var_use] <- apply(Taxon_use_new_inv[var_use],2,inormal) 
+#perform inverse-normal transformation for signatures
+inormal <- function(x){
+  qnorm((rank(x, na.last = "keep") - 0.5) / sum(!is.na(x)))
+}
 
-#of note, the value is between 0 and 100 and should be transformed into between 0 and 1
-Taxon_use_new_inv[,anno_sol$microName] <- Taxon_use_new_inv[,anno_sol$microName]/100
+data_use[var_use] <- apply(data_use[var_use],2,inormal) 
 
+#run micro-was for each signature using maaslin2
 for(i in 1:length(var_use)) {
   
   vari = var_use[i]
   namei= met_name[i]
   
-  Maaslin2(input_data=Taxon_use_new_inv[,Microbiome],
-           input_metadata=Taxon_use_new_inv[,Phenotypes],
+  Maaslin2(input_data=data_use[,Microbiome],
+           input_metadata=data_use[,Phenotypes],
            output=paste("~dir/",namei,sep=''), 
            min_abundance = 0.0001,
            min_prevalence = 0.1, 
@@ -60,11 +69,10 @@ for(i in 1:length(var_use)) {
 #           chunk2: association between individual metabolites and microbial species
 #
 #--------------------------------------------------------------------------------------------
-load("Data_For_Med.RData")
-
-data_use[sp] <- apply(data_use[sp],2,function(x)asin(sqrt(x)))
-data_use[var2] <- apply(data_use[var2],2,inormal)
-data_use[exp] <- apply(data_use[exp],2,inormal)
+#data transformation
+data_use[sp] <- apply(data_use[sp],2,function(x)asin(sqrt(x)))  #species associated with signatures
+data_use[var] <- apply(data_use[var],2,inormal)                 #metabolites included in the signatures
+data_use[exp] <- apply(data_use[exp],2,inormal)                 #dietary pattern scores
 
 #association between diet (exposure) and GMB (mediator)
 res = data.frame(Diet=NA,microName=NA,Est=NA,se=NA,P=NA)
@@ -78,7 +86,7 @@ for (i in exp){
     data_use[,"Score2"] <- data_use[,j] #GMB
     
     tryCatch({
-      fit = glm(Score2~Score1+AGE_V2+GENDER_V2+ALCOHOL_USE_V2+CIGARETTE_USE_V2+HIGH_TOTAL_CHOL2_V2+HYPERTENSION2_V2+DYSLIPIDEMIA_V2+BMI_V2, data=data_use)
+      fit = glm(Score2~Score1+age_fec+bmi_bld+totMETs_paq+smoke_bld+probio_2m_fec+antibio_12m_fec+colsc_2m_fec+acid_2m_fec+stooltype_fec.1+stooltype_fec.2+stooltype_fec.3+stooltype_fec.4+stooltype_fec.5+stooltype_fec.6, data=data_use)
       
       x = x+1
       res[x,"Diet"] = i
@@ -96,21 +104,21 @@ for (i in exp){
   }
 }
 
-diet_gmb_sol <- left_join(res,anno_sol[,c("microName","species")],by="microName")
+diet_gmb <- left_join(res,anno_sample[,c("microName","species")],by="microName")
 
 #association between metabolites (outcome) and GMB (mediator)
 res = data.frame(microName=NA,HMDB=NA,Est=NA,se=NA,P=NA)
 
 x = 0
 
-for (i in var2){
+for (i in var){
   for (j in sp){
     
     data_use[,"Met"] <- data_use[,i]
     data_use[,"GMB"] <- data_use[,j]
     
     tryCatch({
-      fit = glm(GMB~Met+AGE_V2+GENDER_V2+ALCOHOL_USE_V2+CIGARETTE_USE_V2+HIGH_TOTAL_CHOL2_V2+HYPERTENSION2_V2+DYSLIPIDEMIA_V2+BMI_V2, data=data_use)
+      fit = glm(GMB~Met+age_fec+bmi_bld+totMETs_paq+smoke_bld+probio_2m_fec+antibio_12m_fec+colsc_2m_fec+acid_2m_fec+stooltype_fec.1+stooltype_fec.2+stooltype_fec.3+stooltype_fec.4+stooltype_fec.5+stooltype_fec.6, data=data_use)
       
       x = x+1
       res[x,"microName"] = j
@@ -128,7 +136,7 @@ for (i in var2){
   }
 }
 
-gmb_met_sol <- left_join(res,anno_sol[,c("microName","species")],by="microName") %>% left_join(met_t2d[,c("HMDB","name")],by="HMDB")
+gmb_met <- left_join(res,anno_sample[,c("microName","species")],by="microName") %>% left_join(anno[,c("HMDB","Name")],by="HMDB")
 
 #association between diet (exposure) and metabolite (outcome)
 res = data.frame(Diet=NA,HMDB=NA,Est=NA,se=NA,P=NA)
@@ -136,13 +144,13 @@ res = data.frame(Diet=NA,HMDB=NA,Est=NA,se=NA,P=NA)
 x = 0
 
 for (i in exp){
-  for (j in var2){
+  for (j in var){
     
     data_use[,"Score1"] <- data_use[,i] #diet
     data_use[,"Score2"] <- data_use[,j] #metabolite
     
     tryCatch({
-      fit = glm(Score2~Score1+AGE_V2+GENDER_V2+ALCOHOL_USE_V2+CIGARETTE_USE_V2+HIGH_TOTAL_CHOL2_V2+HYPERTENSION2_V2+DYSLIPIDEMIA_V2+BMI_V2, data=data_use)
+      fit = glm(Score2~Score1+age_fec+bmi_bld+totMETs_paq+smoke_bld+probio_2m_fec+antibio_12m_fec+colsc_2m_fec+acid_2m_fec+stooltype_fec.1+stooltype_fec.2+stooltype_fec.3+stooltype_fec.4+stooltype_fec.5+stooltype_fec.6, data=data_use)
       
       x = x+1
       res[x,"Diet"] = i
@@ -160,43 +168,52 @@ for (i in exp){
   }
 }
 
-diet_met_sol <- left_join(res,met_t2d[,c("HMDB","name")],by="HMDB")
+diet_met <- left_join(res,anno[,c("HMDB","Name")],by="HMDB")
 
 #--------------------------------------------------------------------------------------------
 #
 #           chunk3: mediation analysis
 #
 #--------------------------------------------------------------------------------------------
-covar <- c("AGE_V2","GENDER_V2","ALCOHOL_USE_V2","CIGARETTE_USE_V2","HIGH_TOTAL_CHOL2_V2","HYPERTENSION2_V2","DYSLIPIDEMIA_V2","BMI_V2")
+#define dataset
+data_use <- micro_sample
 
-exp1 <- "amed_score"
-med1 <- unique(res_sol[which(res_sol$species %in% unique(res_mwas_sig[which(res_mwas_sig$Diet=="AMED"),]$species)),]$microName) 
+#here we take AMED as an example
+covar <- c("ageyr","race","bmi","act","alco","smoke","calor","stooltype_fec.1","stooltype_fec.2","stooltype_fec.3","stooltype_fec.4","stooltype_fec.5","stooltype_fec.6","stooltype_fec.7","stooltype_fec.8","antibio_12m_fec","colsc_2m_fec","probio_2m_fec","acid_2m_fec")
+
+#define exposure
+exp1 <- "amed_av"
+
+#define mediator
+med1 <- sp 
+
+#define outcome
 out1 <- "amed"
 
-all.int.use <- sol_use
-
-all.int.use[exp1] <- apply(all.int.use[exp1],2,inormal)
-all.int.use[med1] <- apply(all.int.use[med1],2,function(x)asin(sqrt(x)))
-all.int.use[out1] <- apply(all.int.use[out1],2,inormal)
+#data transformation
+data_use[exp1] <- apply(data_use[exp1],2,inormal)
+data_use[med1] <- apply(data_use[med1],2,function(x)asin(sqrt(x)))
+data_use[out1] <- apply(data_use[out1],2,inormal)
 
 metab_names <- med1
 
-metab_dataset <- all.int.use %>% dplyr::select(metab_names)
+metab_dataset <- data_use %>% dplyr::select(metab_names)
 
 controlled_med<- metab_dataset%>%
-  dplyr::select(metab_names)%>%data.table::melt()%>%
+  dplyr::select(metab_names)%>%reshape2::melt()%>%
   group_by(variable)%>%
   summarize(median=median(value,na.rm = T))
 
 controlled_med<-as.vector(controlled_med$median)
 
+#run mediation analysis
 singlemed_test_result<-list()  
 
 exp_x <- exp1
 
 for(i in 1:length(metab_names)){
   
-  dati =all.int.use[,c(exp_x,metab_names[i],out1,covar)] #note: mediator,exposure,outcome,event can not be NA
+  dati =data_use[,c(exp_x,metab_names[i],out1,covar)] #note: mediator,exposure,outcome,event can not be NA
   dati = dati[complete.cases(dati),]
   dati[,exp_x] <- as.numeric(dati[,exp_x])
   dati[,metab_names[i]] <- as.numeric(dati[,metab_names[i]])
@@ -205,7 +222,7 @@ for(i in 1:length(metab_names)){
   med_controll_value_list <- as.list(controlled_med[1])      #this is a list with single value
   mreg_list <- as.list(rep("linear",length(metab_names[i]))) #this for models in mediator analysis 
   
-  model_cmest<- cmest(data = dati,model = "rb",outcome = out1[1],exposure = exp_x,mediator = med_list,basec = c(covar),EMint = FALSE,mreg=mreg_list <- as.list(rep("linear",1)),yreg="linear",astar=0,a=1,mval=as.list(controlled_med[1]),estimation="imputation",inference="bootstrap",nboot=100,yvar=1) 
+  model_cmest<- cmest(data = dati,model = "rb",outcome = out1[1],exposure = exp_x,mediator = med_list,basec = c(covar),EMint = FALSE,mreg=mreg_list <- as.list(rep("linear",1)),yreg="linear",astar=0,a=1,mval=as.list(controlled_med[1]),estimation="imputation",inference="bootstrap",nboot=100) 
   
   #print(paste0(a,"-",i)) #to monitoring the process of cmest model
   
@@ -222,8 +239,6 @@ singlemed_test_result_save <- singlemed_test_result_save %>% group_by(rowname) %
 
 singlemed_test_result_save$exposure<-exp_x
 singlemed_test_result_save$outcome<-out1[1]
-
-dat1 <- singlemed_test_result_save
 
 #--------------------------------------------------------------------------------------------
 #
