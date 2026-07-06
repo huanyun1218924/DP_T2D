@@ -64,27 +64,60 @@ for (inrep in 1:500) {
 
 dev.off()
 
+rm(list = ls())
+
 #--------------------------------------------------------------------------------------------
 #
 #           chunk2: estimate pearson correlation
 #
 #--------------------------------------------------------------------------------------------
-#calculate correlation between dietary scores by ffq and metabolic signature
-dqs <- c("id","study","diabetes","amed_av","ahei_av","dash_av","pdi_av","hpdi_av","updi_av","edip_av","edih_av")
-sig <- c("amed2","ahei2","dash2","pdi2","hpdi2","updi2","edip2","edih2")
+#read sample data
+load("signature_sample.RData")
 
-dp <- c("amed_av","ahei_av","dash_av","pdi_av","hpdi_av","updi_av","edip_av","edih_av")
-rs <- cor(all[dp], all[sig], method = "pearson", use = "pairwise") %>% as.data.frame()
+#calculate metabolomic signature in replication cohorts
+amed0 <- na.omit(sig_list[,1:2]); amed <- data.frame(amed0[,-1]); rownames(amed) <- amed0[,1]
+ahei0 <- na.omit(sig_list[,4:5]); ahei <- data.frame(ahei0[,-1]); rownames(ahei) <- ahei0[,1]
+dash0 <- na.omit(sig_list[,7:8]); dash <- data.frame(dash0[,-1]); rownames(dash) <- dash0[,1]
+opdi0 <- na.omit(sig_list[,10:11]); opdi <- data.frame(opdi0[,-1]); rownames(opdi) <- opdi0[,1]
+hpdi0 <- na.omit(sig_list[,13:14]); hpdi <- data.frame(hpdi0[,-1]); rownames(hpdi) <- hpdi0[,1]
+updi0 <- na.omit(sig_list[,16:17]); updi <- data.frame(updi0[,-1]); rownames(updi) <- updi0[,1]
+edip0 <- na.omit(sig_list[,19:20]); edip <- data.frame(edip0[,-1]); rownames(edip) <- edip0[,1]
+edih0 <- na.omit(sig_list[,22:23]); edih <- data.frame(edih0[,-1]); rownames(edih) <- edih0[,1]
+
+amed$amed0....1. <- as.numeric(amed$amed0....1.)
+ahei$ahei0....1. <- as.numeric(ahei$ahei0....1.)
+dash$dash0....1. <- as.numeric(dash$dash0....1.)
+opdi$opdi0....1. <- as.numeric(opdi$opdi0....1.)
+hpdi$hpdi0....1. <- as.numeric(hpdi$hpdi0....1.)
+updi$updi0....1. <- as.numeric(updi$updi0....1.)
+edip$edip0....1. <- as.numeric(edip$edip0....1.)
+edih$edih0....1. <- as.numeric(edih$edih0....1.)
+
+test_sample$amed = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(amed))], t(amed[which(rownames(amed) %in% colnames(test_sample)),])), 1, sum)+amed[1,1]
+test_sample$ahei = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(ahei))], t(ahei[which(rownames(ahei) %in% colnames(test_sample)),])), 1, sum)+ahei[1,1]
+test_sample$dash = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(dash))], t(dash[which(rownames(dash) %in% colnames(test_sample)),])), 1, sum)+dash[1,1]
+test_sample$opdi = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(opdi))], t(opdi[which(rownames(opdi) %in% colnames(test_sample)),])), 1, sum)+opdi[1,1]
+test_sample$hpdi = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(hpdi))], t(hpdi[which(rownames(hpdi) %in% colnames(test_sample)),])), 1, sum)+hpdi[1,1]
+test_sample$updi = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(updi))], t(updi[which(rownames(updi) %in% colnames(test_sample)),])), 1, sum)+updi[1,1]
+test_sample$edip = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(edip))], t(edip[which(rownames(edip) %in% colnames(test_sample)),])), 1, sum)+edip[1,1]
+test_sample$edih = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(edih))], t(edih[which(rownames(edih) %in% colnames(test_sample)),])), 1, sum)+edih[1,1]
+
+#calculate correlation between dietary scores by ffq and metabolic signature
+sig <- c("amed","ahei","dash","opdi","hpdi","updi","edip","edih")              #predicted dietary score
+dp <- c("amed1","ahei1","dash1","opdi1","hpdi1","updi1","edip1","edih1")       #raw dieatry score
+
+rs <- cor(test_sample[dp], test_sample[sig], method = "pearson", use = "pairwise") %>% as.data.frame()
+
+rm(list = ls())
 
 #--------------------------------------------------------------------------------------------
 #
 #            chunk3 - plotting
 #
 #--------------------------------------------------------------------------------------------
-#load signature profile
-sig_list <- read_excel("Metabolic signature of DQSs_Feb 13.xlsx", sheet = "Cross-platform_SOL (n=122)") %>% as.data.frame()
+#read signature information
+load("signature_sample.RData")
 
-#get signature for each dietary score
 amed0 <- na.omit(sig_list[,1:2]); amed <- data.frame(amed0[,-1]); rownames(amed) <- amed0[,1]
 ahei0 <- na.omit(sig_list[,4:5]); ahei <- data.frame(ahei0[,-1]); rownames(ahei) <- ahei0[,1]
 dash0 <- na.omit(sig_list[,7:8]); dash <- data.frame(dash0[,-1]); rownames(dash) <- dash0[,1]
@@ -96,19 +129,15 @@ edih0 <- na.omit(sig_list[,22:23]); edih <- data.frame(edih0[,-1]); rownames(edi
 
 names(amed0)[1] <- names(ahei0)[1] <- names(dash0)[1] <- names(opdi0)[1] <- names(hpdi0)[1] <- names(updi0)[1] <- names(edip0)[1] <- names(edih0)[1] <- "HMDB"
 
-#clean the annotation dataset
-anno <- fread("Annotation_final.csv")
-anno[218:227,3] <- "Other lipids"
-
 #get the number for each subclass
-amed1 <- subset(anno,HMDB %in% amed0$HMDB); dim(amed1) #77
-ahei1 <- subset(anno,HMDB %in% ahei0$HMDB); dim(ahei1) #68
-dash1 <- subset(anno,HMDB %in% dash0$HMDB); dim(dash1) #73
-opdi1 <- subset(anno,HMDB %in% opdi0$HMDB); dim(opdi1) #46
-hpdi1 <- subset(anno,HMDB %in% hpdi0$HMDB); dim(hpdi1) #58
-updi1 <- subset(anno,HMDB %in% updi0$HMDB); dim(updi1) #51
-edip1 <- subset(anno,HMDB %in% edip0$HMDB); dim(edip1) #97
-edih1 <- subset(anno,HMDB %in% edih0$HMDB); dim(edih1) #59
+amed1 <- subset(anno,HMDB %in% amed0$HMDB); dim(amed1) 
+ahei1 <- subset(anno,HMDB %in% ahei0$HMDB); dim(ahei1) 
+dash1 <- subset(anno,HMDB %in% dash0$HMDB); dim(dash1) 
+opdi1 <- subset(anno,HMDB %in% opdi0$HMDB); dim(opdi1) 
+hpdi1 <- subset(anno,HMDB %in% hpdi0$HMDB); dim(hpdi1) 
+updi1 <- subset(anno,HMDB %in% updi0$HMDB); dim(updi1) 
+edip1 <- subset(anno,HMDB %in% edip0$HMDB); dim(edip1) 
+edih1 <- subset(anno,HMDB %in% edih0$HMDB); dim(edih1)
 
 amed2 <- subset(anno,HMDB %in% amed0$HMDB); dim(amed2) 
 ahei2 <- subset(anno,HMDB %in% ahei0$HMDB); dim(ahei2) 
@@ -119,16 +148,15 @@ updi2 <- subset(anno,HMDB %in% updi0$HMDB); dim(updi2)
 edip2 <- subset(anno,HMDB %in% edip0$HMDB); dim(edip2)
 edih2 <- subset(anno,HMDB %in% edih0$HMDB); dim(edih2) 
 
-#deal with lipid issue
 met_num <- dplyr::bind_rows(table(amed2$Subclass),table(ahei2$Subclass),
                             table(dash2$Subclass),table(opdi2$Subclass),
                             table(hpdi2$Subclass),table(updi2$Subclass),
                             table(edip2$Subclass),table(edih2$Subclass)) %>% t() %>% as.data.frame()
 
-names(met_num) <- c("AMED","AHEI-2010","DASH","PDI","hPDI","uPDI","EDIP","EDIH")
+names(met_num) <- c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH")
 met_num$name <- rownames(met_num)
 
-melted_met_num <- melt(met_num, id.vars = "name")
+melted_met_num <- reshape2::melt(met_num, id.vars = "name")
 melted_met_num <- drop_na(melted_met_num)
 melted_met_num$value <- as.factor(melted_met_num$value)
 
