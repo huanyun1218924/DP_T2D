@@ -10,22 +10,6 @@ inormal <- function(x){
   qnorm((rank(x, na.last = "keep") - 0.5) / sum(!is.na(x)))
 }
 
-meta_test <- function(b,se){
-  v <- se^2 
-  w <- 1/v
-  w_to <- sum(w, na.rm = T)
-  b_meta <- sum(w*b,na.rm = T)/w_to
-  se_meta <- sqrt(1/w_to)
-  z_meta <- b_meta/se_meta
-  p_meta <- pnorm(abs(z_meta),lower.tail=F)*2
-  return(c(b_meta,se_meta,z_meta,p_meta))
-}
-
-heter_test <- function(b,se){
-  p <- rma(yi=b,sei=se,method="FE")$QEp
-  round(p,digit=100)
-}
-
 cat = function(prs,cutofftype,data) { # tertile, decile, top10, top20, topbut10, topbut20
   
   dat = data[c(prs)]
@@ -85,15 +69,15 @@ cat = function(prs,cutofftype,data) { # tertile, decile, top10, top20, topbut10,
 
 singlefun1 = function(exposure,outcome,dataframe){
   
-  d = dataframe[,c(exposure,outcome,"ptime_diabetes","ageyr","studycaco","fast","aspirinuse","smoking","actcat","fhxpremi","fhxdb","phxchol","phxhbp","BMIcont","id")]
+  d = dataframe[,c(exposure,outcome,"ptime_diabetes","ageyr","fast","aspirinuse","smoking","act","fhxpremi","fhxdb","phxchol","phxhbp","BMIcont","id")]
   names(d)[1:2] = c("Score","diabetes")
   
   # association
   res = rbind(
     
-    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ Score + ageyr + strata(studycaco), data = d)))["Score",c(1,3,5)],
-    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ Score + ageyr + strata(studycaco) + fast + aspirinuse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp, data = d)))["Score",c(1,3,5)],
-    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ Score + ageyr + strata(studycaco) + fast + aspirinuse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp + BMIcont, data = d)))["Score",c(1,3,5)]
+    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ Score + ageyr, data = d)))["Score",c(1,3,5)],
+    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ Score + ageyr+ fast + aspirinuse + as.factor(smoking) + act + fhxdb + phxchol + phxhbp, data = d)))["Score",c(1,3,5)],
+    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ Score + ageyr+ fast + aspirinuse + as.factor(smoking) + act + fhxdb + phxchol + phxhbp + BMIcont, data = d)))["Score",c(1,3,5)]
     
   )
   
@@ -103,37 +87,17 @@ singlefun1 = function(exposure,outcome,dataframe){
   
 }
 
-twofun1 = function(exposure1,exposure2,outcome,dataframe){
-  
-  d = dataframe[,c(exposure1,exposure2,outcome,"ptime_diabetes","ageyr","studycaco","fast","aspirinuse","antihluse","smoking","actcat","fhxpremi","fhxdb","phxchol","phxhbp","BMIcata","caloravn","id")]
-  names(d)[1:3] = c("Score1","Score2","diabetes")
-  
-  # association
-  fit1 = coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ Score1 + Score2 + ageyr + strata(studycaco), data = d)))
-  fit2 = coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ Score1 + Score2 + ageyr + strata(studycaco) + fast + aspirinuse + antihluse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp + caloravn, data = d)))
-  fit3 = coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ Score1 + Score2 + ageyr + strata(studycaco) + fast + aspirinuse + antihluse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp + caloravn + BMIcata, data = d)))
-  
-  res = rbind( c(fit1["Score1",c(1,3,5)],fit1["Score2",c(1,3,5)]),
-               c(fit2["Score1",c(1,3,5)],fit2["Score2",c(1,3,5)]),
-               c(fit3["Score1",c(1,3,5)],fit3["Score2",c(1,3,5)]) )
-  
-  rownames(res) = c("Age-adj","MV","MV+BMI")
-  colnames(res) = c("Score1_Est","Score1_sem","Score1_P","Score2_Est","Score2_sem","Score2_P")
-  round(res,digit=100)
-  
-}
-
 singlefun2 = function(exposure,outcome,dataframe){
   
-  d = dataframe[,c(exposure,outcome,"ptime_diabetes","ageyr","studycaco","fast","aspirinuse","smoking","actcat","fhxpremi","fhxdb","phxchol","phxhbp","BMIcont","id")]
+  d = dataframe[,c(exposure,outcome,"ptime_diabetes","ageyr","fast","aspirinuse","smoking","act","fhxpremi","fhxdb","phxchol","phxhbp","BMIcont","id")]
   names(d)[1:2] = c("Score","diabetes")
   
   # association
   res = rbind(
     
-    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ relevel(as.factor(Score),ref='0') + ageyr + strata(studycaco), data = d)))[1:3,c(1,3,5)],
-    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ relevel(as.factor(Score),ref='0') + ageyr + strata(studycaco) + fast + aspirinuse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp, data = d)))[1:3,c(1,3,5)],
-    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ relevel(as.factor(Score),ref='0') + ageyr + strata(studycaco) + fast + aspirinuse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp + BMIcont, data = d)))[1:3,c(1,3,5)]
+    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ relevel(as.factor(Score),ref='0') + ageyr, data = d)))[1:3,c(1,3,5)],
+    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ relevel(as.factor(Score),ref='0') + ageyr+ fast + aspirinuse + as.factor(smoking) + act + fhxdb + phxchol + phxhbp, data = d)))[1:3,c(1,3,5)],
+    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ relevel(as.factor(Score),ref='0') + ageyr+ fast + aspirinuse + as.factor(smoking) + act + fhxdb + phxchol + phxhbp + BMIcont, data = d)))[1:3,c(1,3,5)]
     
   )
   
@@ -145,15 +109,15 @@ singlefun2 = function(exposure,outcome,dataframe){
 
 singlefun3 = function(exposure,outcome,dataframe){
   
-  d = dataframe[,c(exposure,outcome,"ptime_diabetes","ageyr","studycaco","fast","aspirinuse","smoking","actcat","fhxpremi","fhxdb","phxchol","phxhbp","BMIcont","id")]
+  d = dataframe[,c(exposure,outcome,"ptime_diabetes","ageyr","fast","aspirinuse","smoking","act","fhxpremi","fhxdb","phxchol","phxhbp","BMIcont","id")]
   names(d)[1:2] = c("Score","diabetes")
   
   # association
   res = rbind(
     
-    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ as.numeric(Score) + ageyr + strata(studycaco), data = d)))[1,c(1,3,5)],
-    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ as.numeric(Score) + ageyr + strata(studycaco) + fast + aspirinuse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp, data = d)))[1,c(1,3,5)],
-    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ as.numeric(Score) + ageyr + strata(studycaco) + fast + aspirinuse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp + BMIcont, data = d)))[1,c(1,3,5)]
+    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ as.numeric(Score) + ageyr, data = d)))[1,c(1,3,5)],
+    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ as.numeric(Score) + ageyr+ fast + aspirinuse + as.factor(smoking) + act + fhxdb + phxchol + phxhbp, data = d)))[1,c(1,3,5)],
+    coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ as.numeric(Score) + ageyr+ fast + aspirinuse + as.factor(smoking) + act + fhxdb + phxchol + phxhbp + BMIcont, data = d)))[1,c(1,3,5)]
     
   )
   
@@ -163,69 +127,33 @@ singlefun3 = function(exposure,outcome,dataframe){
   
 }
 
-twofun2 = function(exposure1,exposure2,outcome,dataframe){
-  
-  d = dataframe[,c(exposure1,exposure2,outcome,"ptime_diabetes","ageyr","studycaco","fast","aspirinuse","antihluse","smoking","actcat","fhxpremi","fhxdb","phxchol","phxhbp","BMIcata","caloravn","id")]
-  names(d)[1:3] = c("Score1","Score2","diabetes")
-  
-  # association
-  fit1 = coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ relevel(as.factor(Score1),ref='0') + Score2 + ageyr + strata(studycaco), data = d)))
-  fit2 = coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ relevel(as.factor(Score1),ref='0') + Score2 + ageyr + strata(studycaco) + fast + aspirinuse + antihluse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp + caloravn, data = d)))
-  fit3 = coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ relevel(as.factor(Score1),ref='0') + Score2 + ageyr + strata(studycaco) + fast + aspirinuse + antihluse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp + caloravn + BMIcata, data = d)))
-  
-  res = rbind( c(fit1["Score1",c(1,3,5)],fit1["Score2",c(1,3,5)]),
-               c(fit2["Score1",c(1,3,5)],fit2["Score2",c(1,3,5)]),
-               c(fit3["Score1",c(1,3,5)],fit3["Score2",c(1,3,5)]) )
-  
-  rownames(res) = c("Age-adj","MV","MV+BMI")
-  colnames(res) = c("Score1_Est","Score1_sem","Score1_P","Score2_Est","Score2_sem","Score2_P")
-  round(res,digit=100)
-  
-}
-
-twofun3 = function(exposure1,exposure2,outcome,dataframe){
-  
-  d = dataframe[,c(exposure1,exposure2,outcome,"ptime_diabetes","ageyr","studycaco","fast","aspirinuse","antihluse","smoking","actcat","fhxpremi","fhxdb","phxchol","phxhbp","BMIcata","caloravn","id")]
-  names(d)[1:3] = c("Score1","Score2","diabetes")
-  
-  # association
-  fit1 = coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ relevel(as.factor(Score2),ref='0') + Score1 + ageyr + strata(studycaco), data = d)))
-  fit2 = coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ relevel(as.factor(Score2),ref='0') + Score1 + ageyr + strata(studycaco) + fast + aspirinuse + antihluse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp + caloravn, data = d)))
-  fit3 = coef(summary(coxph(Surv(ptime_diabetes, diabetes) ~ relevel(as.factor(Score2),ref='0') + Score1 + ageyr + strata(studycaco) + fast + aspirinuse + antihluse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp + caloravn + BMIcata, data = d)))
-  
-  res = rbind( c(fit1["Score1",c(1,3,5)],fit1["Score2",c(1,3,5)]),
-               c(fit2["Score1",c(1,3,5)],fit2["Score2",c(1,3,5)]),
-               c(fit3["Score1",c(1,3,5)],fit3["Score2",c(1,3,5)]) )
-  
-  rownames(res) = c("Age-adj","MV","MV+BMI")
-  colnames(res) = c("Score1_Est","Score1_sem","Score1_P","Score2_Est","Score2_sem","Score2_P")
-  round(res,digit=100)
-  
-}
-
 #--------------------------------------------------------------------------------------------
 #
 #           chunk1: PH assumption test 
 #
 #--------------------------------------------------------------------------------------------
-load("NHSHPFS_Final_ForAnalysis0322.RData")
+#read sample data
+load("t2d_sample.RData")
 
+data_use <- t2d_sample
+
+#get list of dietary patterns and metabolomic signatures
 exposures <- c("amed_av","ahei_av","dash_av","pdi_av","hpdi_av","updi_av","edip_av","edih_av",
                "amed","ahei","dash","pdi","hpdi","updi","edip","edih")
 
 var <- c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH","AMED_Signature","AHEI_Signature","DASH_Signature","PDI_Signature","hPDI_Signature","uPDI_Signature","EDIP_Signature","EDIH_Signature")
 
-covariates <-  c("ageyr","fast","aspirinuse","smoking","actcat","fhxpremi","fhxdb","phxchol","phxhbp","BMIcont")
+covariates <-  c("ageyr","fast","aspirinuse","smoking","act","fhxpremi","fhxdb","phxchol","phxhbp","BMIcont")
 
+#inverse-normal transformation for dietary patterns and metabolomic signatures
 data_use[exposures] <- apply(data_use[exposures],2,inormal)
 
-data_use$ptime_diabetes <- data_use$ptime_diabetes/12
-
+#plot PH assumption
 plots<- list()
 
 for (i in 1:16) {
 
-  formula_text <- paste("Surv(ptime_diabetes, diabetes) ~",exposures[i],"+ ageyr + strata(studycaco) + fast + aspirinuse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp + BMIcont", sep='')
+  formula_text <- paste("Surv(ptime_diabetes, diabetes) ~",exposures[i],"+ ageyr + fast + aspirinuse + as.factor(smoking) + actcat + fhxdb + phxchol + phxhbp + BMIcont", sep='')
   fit <- coxph(as.formula(formula_text), data=data_use)
   ph <- cox.zph(fit,transform = "identity")
   ph_p <- ph$table[exposures[i],"p"]
@@ -259,8 +187,7 @@ ggsave("PH_test.png", p, width = 12, height = 8, dpi = 600)
 #           chunk2: association with T2D
 #
 #--------------------------------------------------------------------------------------------
-#in nhs1
-data_use <- nhs_use[which(nhs_use$cohort=="1"),]
+data_use <- t2d_sample
 
 var <- c("amed_av","ahei_av","dash_av","pdi_av","hpdi_av","updi_av","edip_av","edih_av",
          "amed","ahei","dash","pdi","hpdi","updi","edip","edih")
@@ -289,7 +216,6 @@ res1 <- rbind(cbind(d11,d12),cbind(d21,d22),cbind(d31,d32),cbind(d41,d42),
               cbind(d51,d52),cbind(d61,d62),cbind(d71,d72),cbind(d81,d82)) %>% as.data.frame()
 
 res1$Trait <- rep(c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH"),each=3)
-res1$Study <- "NHS1"
 res1$Type <- "Per SD"
 res1$Model <- rep(c("Age","MV","MV+BMI"),times=8)
 
@@ -354,238 +280,16 @@ res3 <- rbind(cbind(d13,d14),cbind(d23,d24),cbind(d33,d34),cbind(d43,d44),
               cbind(d53,d54),cbind(d63,d64),cbind(d73,d74),cbind(d83,d84)) %>% as.data.frame()
 
 res2$Trait <- rep(c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH"),each=9)
-res2$Study <- "NHS1"
 res2$Type <- rep(c("Q2","Q3","Q4","Q2","Q3","Q4","Q2","Q3","Q4"),times=8)
 res2$Model <- rep(c("Age","Age","Age","MV","MV","MV","MV+BMI","MV+BMI","MV+BMI"),times=8)
 
 res3$Trait <- rep(c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH"),each=3)
-res3$Study <- "NHS1"
 res3$Type <- "Per SD"
 res3$Model <- rep(c("Age","MV","MV+BMI"),times=8)
 
-res1_n1 <- res1
+res1_n1 <- res1  
 res2_n1 <- res2
 res3_n1 <- res3
-
-#in nhs2
-data_use <- nhs_use[which(nhs_use$cohort=="2"),]
-
-var <- c("amed_av","ahei_av","dash_av","pdi_av","hpdi_av","updi_av","edip_av","edih_av",
-         "amed","ahei","dash","pdi","hpdi","updi","edip","edih")
-
-data_use[var] <- apply(data_use[var],2,inormal)
-
-d11 <- singlefun1("amed_av","diabetes",data_use)        
-d21 <- singlefun1("ahei_av","diabetes",data_use)     
-d31 <- singlefun1("dash_av","diabetes",data_use)         
-d41 <- singlefun1("pdi_av","diabetes",data_use)          
-d51 <- singlefun1("hpdi_av","diabetes",data_use)         
-d61 <- singlefun1("updi_av","diabetes",data_use)         
-d71 <- singlefun1("edip_av","diabetes",data_use)          
-d81 <- singlefun1("edih_av","diabetes",data_use)        
-
-d12 <- singlefun1("amed","diabetes",data_use)           
-d22 <- singlefun1("ahei","diabetes",data_use)          
-d32 <- singlefun1("dash","diabetes",data_use)          
-d42 <- singlefun1("pdi","diabetes",data_use)           
-d52 <- singlefun1("hpdi","diabetes",data_use)            
-d62 <- singlefun1("updi","diabetes",data_use)           
-d72 <- singlefun1("edip","diabetes",data_use)            
-d82 <- singlefun1("edih","diabetes",data_use) 
-
-res1 <- rbind(cbind(d11,d12),cbind(d21,d22),cbind(d31,d32),cbind(d41,d42),
-              cbind(d51,d52),cbind(d61,d62),cbind(d71,d72),cbind(d81,d82)) %>% as.data.frame()
-
-res1$Trait <- rep(c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH"),each=3)
-res1$Study <- "NHS2"
-res1$Type <- "Per SD"
-res1$Model <- rep(c("Age","MV","MV+BMI"),times=8)
-
-data_use <- nhs_use[which(nhs_use$cohort=="2"),]
-
-data_use$amed_av_Q4 = cat("amed_av","quartile",data_use)
-data_use$ahei_av_Q4 = cat("ahei_av","quartile",data_use)
-data_use$dash_av_Q4 = cat("dash_av","quartile",data_use)
-data_use$pdi_av_Q4 = cat("pdi_av","quartile",data_use)
-data_use$hpdi_av_Q4 = cat("hpdi_av","quartile",data_use)
-data_use$updi_av_Q4 = cat("updi_av","quartile",data_use)
-data_use$edip_av_Q4 = cat("edip_av","quartile",data_use)
-data_use$edih_av_Q4 = cat("edih_av","quartile",data_use)
-
-data_use$amed2_Q4 = cat("amed","quartile",data_use)
-data_use$ahei2_Q4 = cat("ahei","quartile",data_use)
-data_use$dash2_Q4 = cat("dash","quartile",data_use)
-data_use$pdi2_Q4 = cat("pdi","quartile",data_use)
-data_use$hpdi2_Q4 = cat("hpdi","quartile",data_use)
-data_use$updi2_Q4 = cat("updi","quartile",data_use)
-data_use$edip2_Q4 = cat("edip","quartile",data_use)
-data_use$edih2_Q4 = cat("edih","quartile",data_use)
-
-d11 <- singlefun2("amed_av_Q4","diabetes",data_use)        
-d21 <- singlefun2("ahei_av_Q4","diabetes",data_use)     
-d31 <- singlefun2("dash_av_Q4","diabetes",data_use)         
-d41 <- singlefun2("pdi_av_Q4","diabetes",data_use)          
-d51 <- singlefun2("hpdi_av_Q4","diabetes",data_use)         
-d61 <- singlefun2("updi_av_Q4","diabetes",data_use)         
-d71 <- singlefun2("edip_av_Q4","diabetes",data_use)          
-d81 <- singlefun2("edih_av_Q4","diabetes",data_use)        
-
-d12 <- singlefun2("amed2_Q4","diabetes",data_use)           
-d22 <- singlefun2("ahei2_Q4","diabetes",data_use)          
-d32 <- singlefun2("dash2_Q4","diabetes",data_use)          
-d42 <- singlefun2("pdi2_Q4","diabetes",data_use)           
-d52 <- singlefun2("hpdi2_Q4","diabetes",data_use)            
-d62 <- singlefun2("updi2_Q4","diabetes",data_use)           
-d72 <- singlefun2("edip2_Q4","diabetes",data_use)            
-d82 <- singlefun2("edih2_Q4","diabetes",data_use) 
-
-d13 <- singlefun3("amed_av_Q4","diabetes",data_use)           
-d23 <- singlefun3("ahei_av_Q4","diabetes",data_use)          
-d33 <- singlefun3("dash_av_Q4","diabetes",data_use)          
-d43 <- singlefun3("pdi_av_Q4","diabetes",data_use)           
-d53 <- singlefun3("hpdi_av_Q4","diabetes",data_use)            
-d63 <- singlefun3("updi_av_Q4","diabetes",data_use)           
-d73 <- singlefun3("edip_av_Q4","diabetes",data_use)            
-d83 <- singlefun3("edih_av_Q4","diabetes",data_use) 
-
-d14 <- singlefun3("amed2_Q4","diabetes",data_use)           
-d24 <- singlefun3("ahei2_Q4","diabetes",data_use)          
-d34 <- singlefun3("dash2_Q4","diabetes",data_use)          
-d44 <- singlefun3("pdi2_Q4","diabetes",data_use)           
-d54 <- singlefun3("hpdi2_Q4","diabetes",data_use)            
-d64 <- singlefun3("updi2_Q4","diabetes",data_use)           
-d74 <- singlefun3("edip2_Q4","diabetes",data_use)            
-d84 <- singlefun3("edih2_Q4","diabetes",data_use) 
-
-res2 <- rbind(cbind(d11,d12),cbind(d21,d22),cbind(d31,d32),cbind(d41,d42),
-              cbind(d51,d52),cbind(d61,d62),cbind(d71,d72),cbind(d81,d82)) %>% as.data.frame()
-
-res3 <- rbind(cbind(d13,d14),cbind(d23,d24),cbind(d33,d34),cbind(d43,d44),
-              cbind(d53,d54),cbind(d63,d64),cbind(d73,d74),cbind(d83,d84)) %>% as.data.frame()
-
-res2$Trait <- rep(c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH"),each=9)
-res2$Study <- "NHS2"
-res2$Type <- rep(c("Q2","Q3","Q4","Q2","Q3","Q4","Q2","Q3","Q4"),times=8)
-res2$Model <- rep(c("Age","Age","Age","MV","MV","MV","MV+BMI","MV+BMI","MV+BMI"),times=8)
-
-res3$Trait <- rep(c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH"),each=3)
-res3$Study <- "NHS2"
-res3$Type <- "Per SD"
-res3$Model <- rep(c("Age","MV","MV+BMI"),times=8)
-
-res1_n2 <- res1
-res2_n2 <- res2
-res3_n2 <- res3
-
-#in hpfs
-data_use <- nhs_use[which(nhs_use$cohort=="3"),]
-
-var <- c("amed_av","ahei_av","dash_av","pdi_av","hpdi_av","updi_av","edip_av","edih_av",
-         "amed","ahei","dash","pdi","hpdi","updi","edip","edih")
-
-data_use[var] <- apply(data_use[var],2,inormal)
-
-d11 <- singlefun1("amed_av","diabetes",data_use)        
-d21 <- singlefun1("ahei_av","diabetes",data_use)     
-d31 <- singlefun1("dash_av","diabetes",data_use)         
-d41 <- singlefun1("pdi_av","diabetes",data_use)          
-d51 <- singlefun1("hpdi_av","diabetes",data_use)         
-d61 <- singlefun1("updi_av","diabetes",data_use)         
-d71 <- singlefun1("edip_av","diabetes",data_use)          
-d81 <- singlefun1("edih_av","diabetes",data_use)        
-
-d12 <- singlefun1("amed","diabetes",data_use)           
-d22 <- singlefun1("ahei","diabetes",data_use)          
-d32 <- singlefun1("dash","diabetes",data_use)          
-d42 <- singlefun1("pdi","diabetes",data_use)           
-d52 <- singlefun1("hpdi","diabetes",data_use)            
-d62 <- singlefun1("updi","diabetes",data_use)           
-d72 <- singlefun1("edip","diabetes",data_use)            
-d82 <- singlefun1("edih","diabetes",data_use) 
-
-res1 <- rbind(cbind(d11,d12),cbind(d21,d22),cbind(d31,d32),cbind(d41,d42),
-              cbind(d51,d52),cbind(d61,d62),cbind(d71,d72),cbind(d81,d82)) %>% as.data.frame()
-
-res1$Trait <- rep(c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH"),each=3)
-res1$Study <- "HPFS"
-res1$Type <- "Per SD"
-res1$Model <- rep(c("Age","MV","MV+BMI"),times=8)
-
-data_use <- nhs_use[which(nhs_use$cohort=="3"),]
-
-data_use$amed_av_Q4 = cat("amed_av","quartile",data_use)
-data_use$ahei_av_Q4 = cat("ahei_av","quartile",data_use)
-data_use$dash_av_Q4 = cat("dash_av","quartile",data_use)
-data_use$pdi_av_Q4 = cat("pdi_av","quartile",data_use)
-data_use$hpdi_av_Q4 = cat("hpdi_av","quartile",data_use)
-data_use$updi_av_Q4 = cat("updi_av","quartile",data_use)
-data_use$edip_av_Q4 = cat("edip_av","quartile",data_use)
-data_use$edih_av_Q4 = cat("edih_av","quartile",data_use)
-
-data_use$amed2_Q4 = cat("amed","quartile",data_use)
-data_use$ahei2_Q4 = cat("ahei","quartile",data_use)
-data_use$dash2_Q4 = cat("dash","quartile",data_use)
-data_use$pdi2_Q4 = cat("pdi","quartile",data_use)
-data_use$hpdi2_Q4 = cat("hpdi","quartile",data_use)
-data_use$updi2_Q4 = cat("updi","quartile",data_use)
-data_use$edip2_Q4 = cat("edip","quartile",data_use)
-data_use$edih2_Q4 = cat("edih","quartile",data_use)
-
-d11 <- singlefun2("amed_av_Q4","diabetes",data_use)        
-d21 <- singlefun2("ahei_av_Q4","diabetes",data_use)     
-d31 <- singlefun2("dash_av_Q4","diabetes",data_use)         
-d41 <- singlefun2("pdi_av_Q4","diabetes",data_use)          
-d51 <- singlefun2("hpdi_av_Q4","diabetes",data_use)         
-d61 <- singlefun2("updi_av_Q4","diabetes",data_use)         
-d71 <- singlefun2("edip_av_Q4","diabetes",data_use)          
-d81 <- singlefun2("edih_av_Q4","diabetes",data_use)        
-
-d12 <- singlefun2("amed2_Q4","diabetes",data_use)           
-d22 <- singlefun2("ahei2_Q4","diabetes",data_use)          
-d32 <- singlefun2("dash2_Q4","diabetes",data_use)          
-d42 <- singlefun2("pdi2_Q4","diabetes",data_use)           
-d52 <- singlefun2("hpdi2_Q4","diabetes",data_use)            
-d62 <- singlefun2("updi2_Q4","diabetes",data_use)           
-d72 <- singlefun2("edip2_Q4","diabetes",data_use)            
-d82 <- singlefun2("edih2_Q4","diabetes",data_use) 
-
-d13 <- singlefun3("amed_av_Q4","diabetes",data_use)           
-d23 <- singlefun3("ahei_av_Q4","diabetes",data_use)          
-d33 <- singlefun3("dash_av_Q4","diabetes",data_use)          
-d43 <- singlefun3("pdi_av_Q4","diabetes",data_use)           
-d53 <- singlefun3("hpdi_av_Q4","diabetes",data_use)            
-d63 <- singlefun3("updi_av_Q4","diabetes",data_use)           
-d73 <- singlefun3("edip_av_Q4","diabetes",data_use)            
-d83 <- singlefun3("edih_av_Q4","diabetes",data_use) 
-
-d14 <- singlefun3("amed2_Q4","diabetes",data_use)           
-d24 <- singlefun3("ahei2_Q4","diabetes",data_use)          
-d34 <- singlefun3("dash2_Q4","diabetes",data_use)          
-d44 <- singlefun3("pdi2_Q4","diabetes",data_use)           
-d54 <- singlefun3("hpdi2_Q4","diabetes",data_use)            
-d64 <- singlefun3("updi2_Q4","diabetes",data_use)           
-d74 <- singlefun3("edip2_Q4","diabetes",data_use)            
-d84 <- singlefun3("edih2_Q4","diabetes",data_use) 
-
-res2 <- rbind(cbind(d11,d12),cbind(d21,d22),cbind(d31,d32),cbind(d41,d42),
-              cbind(d51,d52),cbind(d61,d62),cbind(d71,d72),cbind(d81,d82)) %>% as.data.frame()
-
-res3 <- rbind(cbind(d13,d14),cbind(d23,d24),cbind(d33,d34),cbind(d43,d44),
-              cbind(d53,d54),cbind(d63,d64),cbind(d73,d74),cbind(d83,d84)) %>% as.data.frame()
-
-res2$Trait <- rep(c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH"),each=9)
-res2$Study <- "HPFS"
-res2$Type <- rep(c("Q2","Q3","Q4","Q2","Q3","Q4","Q2","Q3","Q4"),times=8)
-res2$Model <- rep(c("Age","Age","Age","MV","MV","MV","MV+BMI","MV+BMI","MV+BMI"),times=8)
-
-res3$Trait <- rep(c("AMED","AHEI","DASH","PDI","hPDI","uPDI","EDIP","EDIH"),each=3)
-res3$Study <- "HPFS"
-res3$Type <- "Per SD"
-res3$Model <- rep(c("Age","MV","MV+BMI"),times=8)
-
-res1_hp <- res1
-res2_hp <- res2
-res3_hp <- res3
 
 #--------------------------------------------------------------------------------------------
 #
