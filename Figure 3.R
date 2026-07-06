@@ -10,33 +10,41 @@ library(ComplexHeatmap)
 
 #--------------------------------------------------------------------------------------------
 #
-#           chunk1: estimate association with dietary patterns
+#           chunk1: estimate association of metabolites included in the signatures with dietary patterns
 #
 #--------------------------------------------------------------------------------------------
-#define function for use
+#define inverse normal transformation function
 inormal <- function(x){
   qnorm((rank(x, na.last = "keep") - 0.5) / sum(!is.na(x)))
 }
 
-#read annotation file
-anno <- fread("Annotation_final.csv")
-anno[218:227,3] <- "Other lipids"
+#read sample data
+load("signature_sample.RData")
 
-met_t2d <- fread("Met_T2D.csv") %>% as.data.frame()
+#signature information
+amed0 <- na.omit(sig_list[,1:2]); amed <- data.frame(amed0[,-1]); rownames(amed) <- amed0[,1]
+ahei0 <- na.omit(sig_list[,4:5]); ahei <- data.frame(ahei0[,-1]); rownames(ahei) <- ahei0[,1]
+dash0 <- na.omit(sig_list[,7:8]); dash <- data.frame(dash0[,-1]); rownames(dash) <- dash0[,1]
+opdi0 <- na.omit(sig_list[,10:11]); opdi <- data.frame(opdi0[,-1]); rownames(opdi) <- opdi0[,1]
+hpdi0 <- na.omit(sig_list[,13:14]); hpdi <- data.frame(hpdi0[,-1]); rownames(hpdi) <- hpdi0[,1]
+updi0 <- na.omit(sig_list[,16:17]); updi <- data.frame(updi0[,-1]); rownames(updi) <- updi0[,1]
+edip0 <- na.omit(sig_list[,19:20]); edip <- data.frame(edip0[,-1]); rownames(edip) <- edip0[,1]
+edih0 <- na.omit(sig_list[,22:23]); edih <- data.frame(edih0[,-1]); rownames(edih) <- edih0[,1]
 
-#read LVS data
-load("Processed_LVS_Metabolome.RData")
+names(amed0)[1] <- names(ahei0)[1] <- names(dash0)[1] <- names(opdi0)[1] <- names(hpdi0)[1] <- names(updi0)[1] <- names(edip0)[1] <- names(edih0)[1] <- "HMDB"
 
-dp <- c("amed_av","ahei_av","dash_av","pdi_av","hpdi_av","updi_av","edip_av","edih_av")
-var <- met_t2d$HMDB
+#define variable for use
+dp <- c("amed1","ahei1","dash1","opdi1","hpdi1","updi1","edip1","edih1")  #list of dietary patterns in the sample data
+var <- unique(c(amed0[-1,]$HMDB,ahei0[-1,]$HMDB,dash0[-1,]$HMDB,opdi0[-1,]$HMDB,hpdi0[-1,]$HMDB,updi0[-1,]$HMDB,edip0[-1,]$HMDB,edih0[-1,]$HMDB)) #list of metabolites included in the signatures
 
+#calculate the association between metabolites included in the signatures and dietary patterns
 res = data.frame(Diet=NA,HMDB=NA,Est=NA,SE=NA,P=NA)
 
 x = 0
 
 for (i in var){
   for (j in dp){
-    data_use <- lvs
+    data_use <- as.data.frame(train_sample)
     data_use[c(dp,var)] <- apply(data_use[c(dp,var)],2,inormal)
     data_use$exposure <- data_use[,j]
     data_use$outcome <- data_use[,i]
@@ -48,45 +56,40 @@ for (i in var){
   }
 }
 
-res <- right_join(met_t2d[,c("HMDB","name")],res,by="HMDB")
+res <- right_join(anno[,c("HMDB","Name")],res,by="HMDB")
 res_dp <- res
 
-#unify the results on dp-met
-res_dp$name <- gsub("2-Hydroxy-3-methylbutyric acid or 3-Hydroxyisovaleric acid","2-Hydroxy-3-methylbutyric acid",res_dp$name)
-res_dp$name <- gsub("3-Carboxy-4-methyl-5-propyl-2-furanpropanoic acid","CMPF",res_dp$name)
-res_dp$name <- gsub("Erythronic acid or Threonic acid","Erythronic acid",res_dp$name)
-res_dp$name <- gsub("Glycodeoxycholic acid or Glycochenodeoxycholic acid","Glycodeoxycholic acid",res_dp$name)
-res_dp$name <- gsub("2-Hydroxy-3-methyl-pentanoic acid or 2-Hydroxyisocaproic acid","2-Hydroxy-3-methyl-pentanoic acid",res_dp$name)
-res_dp$name <- gsub("2-Hydroxybutyric acid or 3-Hydroxybutyric acid","3-Hydroxybutyric acid",res_dp$name)
+#rename dietary pattern scores
+res_dp$Diet <- gsub("amed1","AMED",res_dp$Diet)
+res_dp$Diet <- gsub("ahei1","AHEI",res_dp$Diet)
+res_dp$Diet <- gsub("dash1","DASH",res_dp$Diet)
+res_dp$Diet <- gsub("opdi1","PDI",res_dp$Diet)
+res_dp$Diet <- gsub("hpdi1","hPDI",res_dp$Diet)
+res_dp$Diet <- gsub("updi1","uPDI",res_dp$Diet)
+res_dp$Diet <- gsub("edip1","EDIP",res_dp$Diet)
+res_dp$Diet <- gsub("edih1","EDIH",res_dp$Diet)
 
-res_dp$Diet <- gsub("amed_av","AMED",res_dp$Diet)
-res_dp$Diet <- gsub("ahei_av","AHEI",res_dp$Diet)
-res_dp$Diet <- gsub("dash_av","DASH",res_dp$Diet)
-res_dp$Diet <- gsub("pdi_av","PDI",res_dp$Diet)
-res_dp$Diet <- gsub("hpdi_av","hPDI",res_dp$Diet)
-res_dp$Diet <- gsub("updi_av","uPDI",res_dp$Diet)
-res_dp$Diet <- gsub("edip_av","EDIP",res_dp$Diet)
-res_dp$Diet <- gsub("edih_av","EDIH",res_dp$Diet)
-
-res_dp_r1 <- res_dp[which(res_dp$Diet=="AMED"&res_dp$HMDB %in% dat2[which(dat2$Diet=="AMED"),]$HMDB),]; res_dp_r1$FDR <- p.adjust(res_dp_r1$P,method = "fdr")
-res_dp_r2 <- res_dp[which(res_dp$Diet=="AHEI"&res_dp$HMDB %in% dat2[which(dat2$Diet=="AHEI"),]$HMDB),]; res_dp_r2$FDR <- p.adjust(res_dp_r2$P,method = "fdr")
-res_dp_r3 <- res_dp[which(res_dp$Diet=="DASH"&res_dp$HMDB %in% dat2[which(dat2$Diet=="DASH"),]$HMDB),]; res_dp_r3$FDR <- p.adjust(res_dp_r3$P,method = "fdr")
-res_dp_r4 <- res_dp[which(res_dp$Diet=="PDI"&res_dp$HMDB %in% dat2[which(dat2$Diet=="PDI"),]$HMDB),];  res_dp_r4$FDR <- p.adjust(res_dp_r4$P,method = "fdr")
-res_dp_r5 <- res_dp[which(res_dp$Diet=="hPDI"&res_dp$HMDB %in% dat2[which(dat2$Diet=="hPDI"),]$HMDB),]; res_dp_r5$FDR <- p.adjust(res_dp_r5$P,method = "fdr")
-res_dp_r6 <- res_dp[which(res_dp$Diet=="uPDI"&res_dp$HMDB %in% dat2[which(dat2$Diet=="uPDI"),]$HMDB),]; res_dp_r6$FDR <- p.adjust(res_dp_r6$P,method = "fdr")
-res_dp_r7 <- res_dp[which(res_dp$Diet=="EDIP"&res_dp$HMDB %in% dat2[which(dat2$Diet=="EDIP"),]$HMDB),]; res_dp_r7$FDR <- p.adjust(res_dp_r7$P,method = "fdr")
-res_dp_r8 <- res_dp[which(res_dp$Diet=="EDIH"&res_dp$HMDB %in% dat2[which(dat2$Diet=="EDIH"),]$HMDB),]; res_dp_r8$FDR <- p.adjust(res_dp_r8$P,method = "fdr")
+#FDR correction across each dietary pattern
+res_dp_r1 <- res_dp[which(res_dp$Diet=="AMED"&res_dp$HMDB %in% amed0[-1,]$HMDB),]; res_dp_r1$FDR <- p.adjust(res_dp_r1$P,method = "fdr")
+res_dp_r2 <- res_dp[which(res_dp$Diet=="AHEI"&res_dp$HMDB %in% ahei0[-1,]$HMDB),]; res_dp_r2$FDR <- p.adjust(res_dp_r2$P,method = "fdr")
+res_dp_r3 <- res_dp[which(res_dp$Diet=="DASH"&res_dp$HMDB %in% dash0[-1,]$HMDB),]; res_dp_r3$FDR <- p.adjust(res_dp_r3$P,method = "fdr")
+res_dp_r4 <- res_dp[which(res_dp$Diet=="PDI"&res_dp$HMDB %in% opdi0[-1,]$HMDB),];  res_dp_r4$FDR <- p.adjust(res_dp_r4$P,method = "fdr")
+res_dp_r5 <- res_dp[which(res_dp$Diet=="hPDI"&res_dp$HMDB %in% hpdi0[-1,]$HMDB),]; res_dp_r5$FDR <- p.adjust(res_dp_r5$P,method = "fdr")
+res_dp_r6 <- res_dp[which(res_dp$Diet=="uPDI"&res_dp$HMDB %in% updi0[-1,]$HMDB),]; res_dp_r6$FDR <- p.adjust(res_dp_r6$P,method = "fdr")
+res_dp_r7 <- res_dp[which(res_dp$Diet=="EDIP"&res_dp$HMDB %in% edip0[-1,]$HMDB),]; res_dp_r7$FDR <- p.adjust(res_dp_r7$P,method = "fdr")
+res_dp_r8 <- res_dp[which(res_dp$Diet=="EDIH"&res_dp$HMDB %in% edih0[-1,]$HMDB),]; res_dp_r8$FDR <- p.adjust(res_dp_r8$P,method = "fdr")
 
 res_dp_r_use <- rbind(res_dp_r1,res_dp_r2,res_dp_r3,res_dp_r4,res_dp_r5,res_dp_r6,res_dp_r7,res_dp_r8)
 res_dp_r_use$sig <- ifelse(res_dp_r_use$FDR <= 0.05 & res_dp_r_use$P < 0.05, "**",ifelse(res_dp_r_use$FDR > 0.05 & res_dp_r_use$P < 0.05, "*", ""))
 
+#transform long data to wide data
 coef_dp <- res_dp_r_use[,c(2:4)] %>%
   pivot_wider(
     names_from = Diet,   # column to spread into new coZZlumns
     values_from = Est      # column containing values
   ) %>% as.data.frame()
 
-rownames(coef_dp) <- coef_dp$name
+rownames(coef_dp) <- coef_dp$Name
 coef_dp <- coef_dp[,-1]
 
 pval_dp <- res_dp_r_use[,c(2:3,8:8)] %>%
@@ -95,69 +98,24 @@ pval_dp <- res_dp_r_use[,c(2:3,8:8)] %>%
     values_from = sig      # column containing values
   ) %>% as.data.frame()
 
-rownames(pval_dp) <- pval_dp$name
+rownames(pval_dp) <- pval_dp$Name
 pval_dp <- pval_dp[,-1]
 
-#distribution of coefficients
-elas <- fread("Coeff_EN.csv") %>% as.data.frame()
-lm <- fread("Coeff_LM.csv") %>% as.data.frame()
-
-elas_long <- elas %>%
-  pivot_longer(
-    cols = names(elas)[2:9],
-    names_to = "Trait",
-    values_to = "coefficient"
-  )
-
-#re-name metabolites
-met_t2d$name <- gsub("2-Hydroxy-3-methylbutyric acid or 3-Hydroxyisovaleric acid","2-Hydroxy-3-methylbutyric acid",met_t2d$name)
-met_t2d$name <- gsub("3-Carboxy-4-methyl-5-propyl-2-furanpropanoic acid","CMPF",met_t2d$name)
-met_t2d$name <- gsub("Erythronic acid or Threonic acid","Erythronic acid",met_t2d$name)
-met_t2d$name <- gsub("Glycodeoxycholic acid or Glycochenodeoxycholic acid","Glycodeoxycholic acid",met_t2d$name)
-met_t2d$name <- gsub("2-Hydroxy-3-methyl-pentanoic acid or 2-Hydroxyisocaproic acid","2-Hydroxy-3-methyl-pentanoic acid",met_t2d$name)
-met_t2d$name <- gsub("2-Hydroxybutyric acid or 3-Hydroxybutyric acid","3-Hydroxybutyric acid",met_t2d$name)
-
-anno_use <- left_join(met_t2d[,c("HMDB","name")],anno[,c("HMDB","Subclass")],by="HMDB")
-
-elas$name <- gsub("2-Hydroxy-3-methylbutyric acid or 3-Hydroxyisovaleric acid","2-Hydroxy-3-methylbutyric acid",elas$name)
-elas$name <- gsub("3-Carboxy-4-methyl-5-propyl-2-furanpropanoic acid","CMPF",elas$name)
-elas$name <- gsub("Erythronic acid or Threonic acid","Erythronic acid",elas$name)
-elas$name <- gsub("Glycodeoxycholic acid or Glycochenodeoxycholic acid","Glycodeoxycholic acid",elas$name)
-elas$name <- gsub("2-Hydroxy-3-methyl-pentanoic acid or 2-Hydroxyisocaproic acid","2-Hydroxy-3-methyl-pentanoic acid",elas$name)
-elas$name <- gsub("2-Hydroxybutyric acid or 3-Hydroxybutyric acid","3-Hydroxybutyric acid",elas$name)
-
-lm$Metabolite <- gsub("2-Hydroxy-3-methylbutyric acid or 3-Hydroxyisovaleric acid","2-Hydroxy-3-methylbutyric acid",lm$Metabolite)
-lm$Metabolite <- gsub("3-Carboxy-4-methyl-5-propyl-2-furanpropanoic acid","CMPF",lm$Metabolite)
-lm$Metabolite <- gsub("Erythronic acid or Threonic acid","Erythronic acid",lm$Metabolite)
-lm$Metabolite <- gsub("Glycodeoxycholic acid or Glycochenodeoxycholic acid","Glycodeoxycholic acid",lm$Metabolite)
-lm$Metabolite <- gsub("2-Hydroxy-3-methyl-pentanoic acid or 2-Hydroxyisocaproic acid","2-Hydroxy-3-methyl-pentanoic acid",lm$Metabolite)
-lm$Metabolite <- gsub("2-Hydroxybutyric acid or 3-Hydroxybutyric acid","3-Hydroxybutyric acid",lm$Metabolite)
+rm(list = ls())
 
 #--------------------------------------------------------------------------------------------
 #
 #           chunk2: plotting
 #
 #--------------------------------------------------------------------------------------------
+#read sample data
+load("signature_sample.RData")
+
+#plot elastic net coefficient
 coef <- elas
 coef <- arrange(coef,desc(AMED))
 rownames(coef) <-  coef$name
 coef <- coef[,-1]
-col_fun = colorRamp2(
-  breaks = seq(1, -1, length.out = 9),  # Adjust range based on your data
-  colors = brewer.pal(9, "RdBu")
-)
-
-anno_use <- anno_use[match(rownames(use),anno_use$name),]
-
-row_ha<-rowAnnotation(foo = anno_use$Subclass,
-                      col = list(foo = c("Amino acids" = "#4F81BD", "Carbohydrates" = "#8cd2c8", "Glycerophospholipids" = "#fa826e", "Glycerolipids" = "#fab464",
-                                         "Sphingolipids" = "#b4dc64", "Fatty acids" = "#facde6", "Other lipids" = "#95a2ff", "Acylcarnitines" = "#beb9dc",
-                                         "Nucleotides" = "#B15928", "Cofactors and vitamins" = "#be82be", "Xenobiotics" = "#5F7530"),gp = gpar(col = "black")),
-                      annotation_name_side = "top",annotation_name_rot=90,
-                      annotation_legend_param = list(foo = list(title = "Subclass",labels = c("Amino acids","Carbohydrates","Glycerophospholipids","Glycerolipids","Sphingolipids",
-                                                                                              "Fatty acids","Other lipids","Acylcarnitines","Nucleotides","Cofactors and vitamins","Xenobiotics"))),
-                      annotation_label = "Subclass")
-
 
 for (i in 1:8){
   coef[,i] <- as.numeric(coef[,i])
@@ -166,6 +124,11 @@ for (i in 1:8){
 coef <- round(coef,3)
 
 use1 <- coef
+
+col_fun = colorRamp2(
+  breaks = seq(1, -1, length.out = 9),  # Adjust range based on your data
+  colors = brewer.pal(9, "RdBu")
+)
 
 ht1 <- Heatmap(use1, 
         col=col_fun,
@@ -195,16 +158,15 @@ ht1 <- Heatmap(use1,
         }
 )
 
-use2 <- coef_dp[match(rownames(use1),rownames(coef_dp)),]
-use2_2 <- pval_dp[match(rownames(use1),rownames(pval_dp)),]
+#plot association of individual metabolites in the signatures and each dietary pattern 
+use2 <- lm[match(rownames(use1),lm$Metabolite),]
+rownames(use2) <- use2$Metabolite
+use2 <- use2[,2:9]
 
 col_fun2 = colorRamp2(
   breaks = seq(0.2, -0.2, length.out = 9),  # Adjust range based on your data
   colors = brewer.pal(9, "RdBu")
 )
-
-use2 <- coef_dp[match(rownames(use_ordered),rownames(coef_dp)),]
-use2_2 <- pval_dp[match(rownames(use_ordered),rownames(pval_dp)),]
 
 ht2 <- Heatmap(use2, 
         col=col_fun2,
@@ -227,37 +189,18 @@ ht2 <- Heatmap(use2,
         column_order = order(as.numeric(gsub("column", "", colnames(use2)))),
         #column_split = LETTERS[1:dim(htmap_coef)[2]],
         column_title = NULL,
-        heatmap_legend_param = list(title = "LM coefficient"),
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          v <- use2_2[i, j]
-          if (!is.na(v)) {
-            grid.text(sprintf(v), x, y,gp = gpar(fontsize = 8, fontfamily="calibri",color="grey30"))
-          }
-        }
+        heatmap_legend_param = list(title = "LM coefficient")
 )
 
-lm_filtered <- met_t2d[match(rownames(use_ordered),met_t2d$name),]
-
-use3 <- lm_filtered[,c("name","beta_t2d")]
-rownames(use3) <- use3$name
-use3 <- use3[,-1] %>% as.data.frame()
-names(use3) <- "T2D"
-use3$T2D <- round(exp(use3$T2D),2)
-rownames(use3) <- lm_filtered$name
-
-use3_2 <- lm_filtered[,c("name","t2d_sig")]
-rownames(use3_2) <- use3_2$name
-use3_2 <- use3_2[,-1] %>% as.data.frame()
-names(use3_2) <- "T2D"
-rownames(use3_2) <- lm_filtered$name
+#plot association with incident T2D
+use3 <- lm[match(rownames(use1),lm$Metabolite),]
+rownames(use3) <- use3$Metabolite
+use3 <- use3[,10:10] %>% as.data.frame()
+rownames(use3) <- rownames(use2)
 
 col_fun3 = colorRamp2(
   breaks = seq(1.6,0.4, length.out = 9),  # Adjust range based on your data
   colors = brewer.pal(9, "RdBu")
-)
-
-use3 <- use3[match(rownames(use_ordered),rownames(use3)),]
-use3_2 <- use3_2[match(rownames(use_ordered),rownames(use3_2)),]
 
 ht3 <- Heatmap(use3, 
         col=col_fun3,
@@ -280,20 +223,17 @@ ht3 <- Heatmap(use3,
         column_order = order(as.numeric(gsub("column", "", colnames(use3)))),
         #column_split = LETTERS[1:dim(htmap_coef)[2]],
         column_title = NULL,
-        heatmap_legend_param = list(title = "With T2D"),
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          v <- use3_2[i, j]
-          if (!is.na(v)) {
-            grid.text(sprintf(v), x, y,gp = gpar(fontsize = 8, fontfamily="calibri",color="grey30"))
-          }
-        }
+        heatmap_legend_param = list(title = "With T2D")
 )
 
 ht_list <- ht1 + ht2 + ht3
 
+#save the figure
 png("Figure3.png",width = 2600, height = 3000, res = 300)
 draw(ht_list,gap = unit(4, "mm"),
      merge_legends = TRUE,
      heatmap_legend_side = "right",
      annotation_legend_side = "right")
 dev.off()
+
+rm(list = ls())
