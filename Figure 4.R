@@ -300,7 +300,7 @@ res3_n1 <- res3
 exp_x = "amed_av"
 
 #define mediator
-metab_names <- intersect(amed1_2$HMDB,var_use)
+metab_names <- 
 
 #inverse-normal transformation
 data[,c(exp,metab_names)] <- apply(data[,c(exp,metab_names)],2,inormal)
