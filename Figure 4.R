@@ -508,3 +508,22 @@ p2
 dev.off()
 
 rm(list = ls())
+
+#sessionInfo()
+#R version 4.3.3 (2024-02-29)
+#Platform: x86_64-pc-linux-gnu (64-bit)
+#Running under: Rocky Linux 9.7 (Blue Onyx)
+
+#Matrix products: default
+#BLAS:   /app/R-4.3.3@i86-rhel9.0/lib64/R/lib/libRblas.so 
+#LAPACK: /app/R-4.3.3@i86-rhel9.0/lib64/R/lib/libRlapack.so;  LAPACK version 3.11.0   
+
+#attached base packages:
+#[1] grid      stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+#[1] CMAverse_0.1.0        gridExtra_2.3         ComplexHeatmap_2.25.3 tidyr_1.3.2          
+#[5] RColorBrewer_1.1-3    circlize_0.4.15       metafor_4.8-0         numDeriv_2016.8-1.1  
+#[9] metadat_1.4-0         Matrix_1.6-5          coxme_2.2-22          bdsmatrix_1.3-7      
+#[13] survival_3.8-3        cowplot_1.2.0         ggplot2_4.0.2         dplyr_1.2.0          
+#[17] data.table_1.18.2.1   
