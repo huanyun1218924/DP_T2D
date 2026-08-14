@@ -60,7 +60,7 @@ for(i in 1:length(var_use)) {
            min_abundance = 0.0001,
            min_prevalence = 0.1, 
            normalization = "None",  #Should set to NONE because species data were already normalized by TSS
-           transform = "AST", 
+           transform = "AST",       #for microbiome data, we perform Arc-sin square root transformation
            analysis_method = "LM",
            fixed_effects = c(vari,AdjVars), 
            correction = "BH",
@@ -288,3 +288,20 @@ draw(ht,
 dev.off()
 
 
+#sessionInfo()
+#R version 4.3.3 (2024-02-29)
+#Platform: x86_64-pc-linux-gnu (64-bit)
+#Running under: Rocky Linux 9.7 (Blue Onyx)
+
+#Matrix products: default
+#BLAS:   /app/R-4.3.3@i86-rhel9.0/lib64/R/lib/libRblas.so 
+#LAPACK: FlexiBLAS OPENBLAS-OPENMP;  LAPACK version 3.9.0
+
+#attached base packages:
+#[1] grid      stats     graphics  grDevices utils     datasets  methods   base     
+
+#other attached packages:
+#[1] ComplexHeatmap_2.25.3 RColorBrewer_1.1-3    CMAverse_0.1.0        lmerTest_3.2-1       
+#[5] lme4_2.0-1            Matrix_1.6-5          Maaslin2_1.16.0       venn_1.12            
+#[9] VennDiagram_1.8.2     futile.logger_1.4.9   readxl_1.4.5          dplyr_1.2.0          
+#[13] data.table_1.18.2.1  
