@@ -73,7 +73,7 @@ rm(list = ls())
 #--------------------------------------------------------------------------------------------
 #
 #           chunk2: metabolomic signature calculation in cohorts 
-#           Note: here we calculate metabolomic signature in the test samples
+#           Note: here we calculate metabolomic signature in the test samples, with available metabolites used for calculation 
 #
 #--------------------------------------------------------------------------------------------
 #read sample metabolome data
