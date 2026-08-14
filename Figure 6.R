@@ -1,3 +1,12 @@
+#install the latest release version of MaAsLin 2
+if(!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("Maaslin2")
+
+#install the latest release version of CMAverse
+devtools::install_github("BS1125/CMAverse")
+
+#load packages
 library(data.table)
 library(dplyr)
 library(readxl)
@@ -277,3 +286,5 @@ draw(ht,
      heatmap_legend_side = "right",
      annotation_legend_side = "right")
 dev.off()
+
+
