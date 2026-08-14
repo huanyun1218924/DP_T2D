@@ -105,7 +105,7 @@ rm(list = ls())
 
 #--------------------------------------------------------------------------------------------
 #
-#           chunk2: plotting
+#           chunk2: Figure 3 plotting
 #
 #--------------------------------------------------------------------------------------------
 #read sample data
@@ -237,3 +237,21 @@ draw(ht_list,gap = unit(4, "mm"),
 dev.off()
 
 rm(list = ls())
+
+  
+#sessionInfo()
+#version 4.3.3 (2024-02-29)
+#:x86_64-pc-linux-gnu (64-bit)
+#under: Rocky Linux 9.7 (Blue Onyx)
+
+# products: default
+#:/app/R-4.3.3@i86-rhel9.0/lib64/R/lib/libRblas.so 
+#:FlexiBLAS OPENBLAS-OPENMP;  LAPACK version 3.9.0
+
+# base packages:
+#1] grid      stats     graphics  grDevices utils     datasets  methods   base     
+
+#other attached packages:
+#[1] ComplexHeatmap_2.25.3 tidyr_1.3.2           RColorBrewer_1.1-3    circlize_0.4.15      
+#[5] ggplot2_4.0.2         reshape2_1.4.5        readxl_1.4.5          dplyr_1.2.0          
+#[9] data.table_1.18.2.1  
