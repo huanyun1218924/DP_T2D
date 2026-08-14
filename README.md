@@ -7,7 +7,7 @@ Sample data:
 
 3. t2d_sample: used for prospective analysis between dietary pattern scores and metabolomic signatures and type 2 diabetes
 
-4. micro_sample: used for microbiome data
+4. micro_sample: used for microbiome analysis
 
 
 Code files in this repository covers the main analyses:
