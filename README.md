@@ -14,10 +14,10 @@ Code files in this repository covers the main analyses:
 1. Figure 2.R: Model training to develop metabolomic signatures for dietary patterns; Caculation of metabolomic signature; Pearson 
    correlation between dietary pattern scores and metabolomic signatures; Count of metabolite subclass in each metabolomic signature.
    
-2. Figure 3.R: Feature of dietary metabolomic signatures;
+2. Figure 3.R: Feature of dietary metabolomic signatures.
   
-3. Figure 4.R: Association between dietary metabolomic signatures and incident type 2 diabetes and mediation analysis;
+3. Figure 4.R: Association between dietary metabolomic signatures and incident type 2 diabetes and mediation analysis.
   
-4. Figure 5.Rmd: Two-sample MR analysis;
+4. Figure 5.Rmd: Two-sample MR analysis.
  
 5. Figure 6.R: Identify species asscoaited metabolomic signatures and mediation analysis.
