@@ -1,3 +1,7 @@
+#install the latest release version of CMAverse
+devtools::install_github("BS1125/CMAverse")
+
+#load pacakages
 library(data.table)
 library(dplyr)
 library(ggplot2)
@@ -9,6 +13,7 @@ library(RColorBrewer)
 library(tidyr)
 library(ComplexHeatmap)
 library(gridExtra)
+library(CMAverse)
 
 #define functions to be used
 inormal <- function(x){
