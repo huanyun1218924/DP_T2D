@@ -8,6 +8,7 @@ library(cvTools)
 #--------------------------------------------------------------------------------------------
 #
 #           chunk1: model training
+#           note: here we use AMED as an example
 #
 #--------------------------------------------------------------------------------------------
 #read data
@@ -25,6 +26,7 @@ met = as.character(names(train_sample)[10:295])
 
 #repeat elastic net for 500 times with all the predictions
 record = data.frame(repNo=NA,NoMetabs=NA,sol_cor=NA)
+
 pdf("TestingPlots_AMED.pdf",width=8, height=24)
 
 for (inrep in 1:500) { 
@@ -120,44 +122,31 @@ data_use_sig <- merge(data_use,data_use_std[,c("id","amed",ahei","dash","pdi","h
 #--------------------------------------------------------------------------------------------
 #
 #           chunk3: estimate pearson correlation
+#           Note: here we used the derived metabolomic signature in the test sample as an example
 #
 #--------------------------------------------------------------------------------------------
-#read sample data
-load("signature_sample.RData")
+#define dietary pattern score and metabolomic signature variables
+dp <- c("amed_score","ahei_score","dash_score","opdi_score","hpdi_score","updi_score","edip_score","edih_score")       #dietary pattern score
+ms <- c("amed","ahei","dash","opdi","hpdi","updi","edip","edih")                                                       #metabolomic signature
 
-#calculate metabolomic signature in replication cohorts
-amed0 <- na.omit(sig_list[,1:2]); amed <- data.frame(amed0[,-1]); rownames(amed) <- amed0[,1]
-ahei0 <- na.omit(sig_list[,4:5]); ahei <- data.frame(ahei0[,-1]); rownames(ahei) <- ahei0[,1]
-dash0 <- na.omit(sig_list[,7:8]); dash <- data.frame(dash0[,-1]); rownames(dash) <- dash0[,1]
-opdi0 <- na.omit(sig_list[,10:11]); opdi <- data.frame(opdi0[,-1]); rownames(opdi) <- opdi0[,1]
-hpdi0 <- na.omit(sig_list[,13:14]); hpdi <- data.frame(hpdi0[,-1]); rownames(hpdi) <- hpdi0[,1]
-updi0 <- na.omit(sig_list[,16:17]); updi <- data.frame(updi0[,-1]); rownames(updi) <- updi0[,1]
-edip0 <- na.omit(sig_list[,19:20]); edip <- data.frame(edip0[,-1]); rownames(edip) <- edip0[,1]
-edih0 <- na.omit(sig_list[,22:23]); edih <- data.frame(edih0[,-1]); rownames(edih) <- edih0[,1]
+#inverse-normal transformation for dietary pattern scores and metabolomic signatures
+inormal <- function(x){
+  qnorm((rank(x, na.last = "keep") - 0.5) / sum(!is.na(x)))
+}
 
-amed$amed0....1. <- as.numeric(amed$amed0....1.)
-ahei$ahei0....1. <- as.numeric(ahei$ahei0....1.)
-dash$dash0....1. <- as.numeric(dash$dash0....1.)
-opdi$opdi0....1. <- as.numeric(opdi$opdi0....1.)
-hpdi$hpdi0....1. <- as.numeric(hpdi$hpdi0....1.)
-updi$updi0....1. <- as.numeric(updi$updi0....1.)
-edip$edip0....1. <- as.numeric(edip$edip0....1.)
-edih$edih0....1. <- as.numeric(edih$edih0....1.)
-
-test_sample$amed = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(amed))], t(amed[which(rownames(amed) %in% colnames(test_sample)),])), 1, sum)+amed[1,1]
-test_sample$ahei = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(ahei))], t(ahei[which(rownames(ahei) %in% colnames(test_sample)),])), 1, sum)+ahei[1,1]
-test_sample$dash = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(dash))], t(dash[which(rownames(dash) %in% colnames(test_sample)),])), 1, sum)+dash[1,1]
-test_sample$opdi = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(opdi))], t(opdi[which(rownames(opdi) %in% colnames(test_sample)),])), 1, sum)+opdi[1,1]
-test_sample$hpdi = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(hpdi))], t(hpdi[which(rownames(hpdi) %in% colnames(test_sample)),])), 1, sum)+hpdi[1,1]
-test_sample$updi = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(updi))], t(updi[which(rownames(updi) %in% colnames(test_sample)),])), 1, sum)+updi[1,1]
-test_sample$edip = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(edip))], t(edip[which(rownames(edip) %in% colnames(test_sample)),])), 1, sum)+edip[1,1]
-test_sample$edih = apply(mapply(`*`, test_sample[,which(colnames(test_sample) %in% rownames(edih))], t(edih[which(rownames(edih) %in% colnames(test_sample)),])), 1, sum)+edih[1,1]
+data_use_sig[,c(dp,ms)] <- apply(data_use_sig[,c(dp,ms)],2,inormal)
 
 #calculate correlation between dietary scores by ffq and metabolic signature
-sig <- c("amed","ahei","dash","opdi","hpdi","updi","edip","edih")              #predicted dietary score
-dp <- c("amed1","ahei1","dash1","opdi1","hpdi1","updi1","edip1","edih1")       #raw dieatry score
+data <- data_use_sig
+pairs <- data.frame(x = dp,y = ms)
 
-rs <- cor(test_sample[dp], test_sample[sig], method = "pearson", use = "pairwise") %>% as.data.frame()
+res <- pairs %>%
+  mutate(result = map2(x, y,~ cor.test(data[[.x]],data[[.y]],method = "pearson")),r = map_dbl(result, ~ unname(.x$estimate)),LCI = map_dbl(result, ~ .x$conf.int[1]),UCI = map_dbl(result, ~ .x$conf.int[2]),p = map_dbl(result, ~ .x$p.value)) %>%
+  select(-result) %>%
+  mutate(result = sprintf("r = %.2f (95%% CI: %.2f–%.2f), P = %.2e",r, LCI, UCI, p))
+
+res5$Study <- "WHI"
+res5$FDR <- p.adjust(res5$p,method="fdr")
 
 rm(list = ls())
 
