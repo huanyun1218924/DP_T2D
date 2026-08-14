@@ -1,4 +1,6 @@
 #load packages
+library(data.table)
+library(dplyr)
 library(plyr)
 library(glmnet)
 library(ggplot2)
@@ -7,7 +9,7 @@ library(cvTools)
 
 #--------------------------------------------------------------------------------------------
 #
-#           chunk1: model training
+#           chunk1: develop metabolomic signature for dietary pattern scores using elastic net regression
 #           note: here we use AMED as an example
 #
 #--------------------------------------------------------------------------------------------
@@ -70,8 +72,8 @@ rm(list = ls())
 
 #--------------------------------------------------------------------------------------------
 #
-#           chunk2: signature calculation in cohorts 
-#           Note: here we use test sample as an example and calculate metabolomic signature for each dietary pattern score
+#           chunk2: metabolomic signature calculation in cohorts 
+#           Note: here we calculate metabolomic signature in the test samples
 #
 #--------------------------------------------------------------------------------------------
 #read sample metabolome data
@@ -152,7 +154,7 @@ rm(list = ls())
 
 #--------------------------------------------------------------------------------------------
 #
-#            chunk4 - plotting
+#            chunk4 - count the subclass information and plotting 
 #
 #--------------------------------------------------------------------------------------------
 #read signature information
@@ -218,3 +220,19 @@ ggplot(melted_met_num, aes(fill=name, y=value, x=variable)) +
   labs(x= "Metabolic signature", y = "Number of metabolites", color = "Subclass") +
   guides(fill=guide_legend(title = "Subclass",ncol=1,byrow = FALSE)) 
 dev.off()
+
+#sessionInfo()
+#R version 4.3.3 (2024-02-29)
+#Platform: x86_64-pc-linux-gnu (64-bit)
+#Running under: Rocky Linux 9.7 (Blue Onyx)
+
+#Matrix products: default
+#BLAS:   /app/R-4.3.3@i86-rhel9.0/lib64/R/lib/libRblas.so 
+#LAPACK: FlexiBLAS OPENBLAS-OPENMP;  LAPACK version 3.9.0
+
+#attached base packages:
+#[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+#other attached packages:
+#[1] cvTools_0.3.3       robustbase_0.99-7   lattice_0.22-7      ggplot2_4.0.2       glmnet_4.1-10      
+#[6] Matrix_1.6-5        plyr_1.8.9          dplyr_1.2.0         data.table_1.18.2.1
