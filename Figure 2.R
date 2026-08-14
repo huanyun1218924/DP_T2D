@@ -9,7 +9,7 @@ library(cvTools)
 
 #--------------------------------------------------------------------------------------------
 #
-#           chunk1: develop metabolomic signature for dietary pattern scores using elastic net regression
+#           chunk1: develop metabolomic signatures for dietary pattern scores using elastic net regression
 #           note: here we use AMED as an example
 #
 #--------------------------------------------------------------------------------------------
