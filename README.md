@@ -11,7 +11,8 @@ Sample data
 
 
 Code files in this repository covers the main analyses:
-1. Figure 2.R: Model training to develop metabolomic signatures for dietary patterns;
+1. Figure 2.R: Model training to develop metabolomic signatures for dietary patterns; Caculation of metabolomic signature; Pearson 
+   correlation between dietary pattern scores and metabolomic signatures; Count of metabolite subclass in each metabolomic signature.
    
 2. Figure 3.R: Feature of dietary metabolomic signatures;
   
