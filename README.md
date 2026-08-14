@@ -1,6 +1,6 @@
 Title: Dietary Patterns, Circulating Metabolome, and Risk of Type 2 Diabetes
 
-Sample data
+Sample data:
 1. model_training_sample.Rdata: used for elastic net model training and initial testing
 
 2. signature_sample.RData: contain signature information, test sample for signature calculation, and annotation file
