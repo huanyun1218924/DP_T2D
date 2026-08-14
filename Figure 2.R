@@ -68,7 +68,58 @@ rm(list = ls())
 
 #--------------------------------------------------------------------------------------------
 #
-#           chunk2: estimate pearson correlation
+#           chunk2: signature calculation in cohorts 
+#           Note: here we use test sample as an example and calculate metabolomic signature for each dietary pattern score
+#
+#--------------------------------------------------------------------------------------------
+#read sample metabolome data
+load("signature_sample.RData")  #it contains train sample data, test sample data, annotation file, and signature information
+
+data_use <- test_sample
+
+#read signature information: 
+amed0 <- na.omit(sig_list[,1:2]); amed <- data.frame(amed0[,-1]); rownames(amed) <- amed0[,1]
+ahei0 <- na.omit(sig_list[,3:4]); ahei <- data.frame(ahei0[,-1]); rownames(ahei) <- ahei0[,1]
+dash0 <- na.omit(sig_list[,5:6]); dash <- data.frame(dash0[,-1]); rownames(dash) <- dash0[,1]
+opdi0 <- na.omit(sig_list[,7:8]); opdi <- data.frame(opdi0[,-1]); rownames(opdi) <- opdi0[,1]
+hpdi0 <- na.omit(sig_list[,9:10]); hpdi <- data.frame(hpdi0[,-1]); rownames(hpdi) <- hpdi0[,1]
+updi0 <- na.omit(sig_list[,11:12]); updi <- data.frame(updi0[,-1]); rownames(updi) <- updi0[,1]
+edip0 <- na.omit(sig_list[,13:14]); edip <- data.frame(edip0[,-1]); rownames(edip) <- edip0[,1]
+edih0 <- na.omit(sig_list[,15:16]); edih <- data.frame(edih0[,-1]); rownames(edih) <- edih0[,1]
+
+#make sure the coefficients from the elastic net model are numeric type
+amed$Coefficient <- as.numeric(amed$Coefficient)
+ahei$Coefficient <- as.numeric(ahei$Coefficient)
+dash$Coefficient <- as.numeric(dash$Coefficient)
+opdi$Coefficient <- as.numeric(opdi$Coefficient)
+hpdi$Coefficient <- as.numeric(hpdi$Coefficient)
+updi$Coefficient <- as.numeric(updi$Coefficient)
+edip$Coefficient <- as.numeric(edip$Coefficient)
+edih$Coefficient <- as.numeric(edih$Coefficient)
+
+#extract metabolite name information
+var <- names(data_use)[10:ncol(test_sample)]  
+
+#standarize metabolites
+data_use_std <- data_use
+data_use_std[var] <- apply(data_use_std[var],2,scale)
+
+#calculate metabolomic signature (formula:weighted sum of selected standarized metabolite plus intercept)
+data_use_std$amed = apply(mapply(`*`, data_use_std[,which(colnames(data_use_std) %in% rownames(amed))], as.numeric(t(amed[which(rownames(amed) %in% colnames(data_use_std)),]))), 1, sum)+as.numeric(amed[1,1])
+data_use_std$ahei = apply(mapply(`*`, data_use_std[,which(colnames(data_use_std) %in% rownames(ahei))], as.numeric(t(ahei[which(rownames(ahei) %in% colnames(data_use_std)),]))), 1, sum)+as.numeric(ahei[1,1])
+data_use_std$dash = apply(mapply(`*`, data_use_std[,which(colnames(data_use_std) %in% rownames(dash))], as.numeric(t(dash[which(rownames(dash) %in% colnames(data_use_std)),]))), 1, sum)+as.numeric(dash[1,1])
+data_use_std$pdi  = apply(mapply(`*`, data_use_std[,which(colnames(data_use_std) %in% rownames(opdi))], as.numeric(t(opdi[which(rownames(opdi) %in% colnames(data_use_std)),]))), 1, sum)+as.numeric(opdi[1,1])
+data_use_std$hpdi = apply(mapply(`*`, data_use_std[,which(colnames(data_use_std) %in% rownames(hpdi))], as.numeric(t(hpdi[which(rownames(hpdi) %in% colnames(data_use_std)),]))), 1, sum)+as.numeric(hpdi[1,1])
+data_use_std$updi = apply(mapply(`*`, data_use_std[,which(colnames(data_use_std) %in% rownames(updi))], as.numeric(t(updi[which(rownames(updi) %in% colnames(data_use_std)),]))), 1, sum)+as.numeric(updi[1,1])
+data_use_std$edip = apply(mapply(`*`, data_use_std[,which(colnames(data_use_std) %in% rownames(edip))], as.numeric(t(edip[which(rownames(edip) %in% colnames(data_use_std)),]))), 1, sum)+as.numeric(edip[1,1])
+data_use_std$edih = apply(mapply(`*`, data_use_std[,which(colnames(data_use_std) %in% rownames(edih))], as.numeric(t(edih[which(rownames(edih) %in% colnames(data_use_std)),]))), 1, sum)+as.numeric(edih[1,1])
+
+#combine the metabolomic signature with raw dataset for subsequent analysis
+data_use_sig <- merge(data_use,data_use_std[,c("id","amed",ahei","dash","pdi","hpdi","updi","edip","edih")],by="id")
+
+#--------------------------------------------------------------------------------------------
+#
+#           chunk3: estimate pearson correlation
 #
 #--------------------------------------------------------------------------------------------
 #read sample data
@@ -112,7 +163,7 @@ rm(list = ls())
 
 #--------------------------------------------------------------------------------------------
 #
-#            chunk3 - plotting
+#            chunk4 - plotting
 #
 #--------------------------------------------------------------------------------------------
 #read signature information
