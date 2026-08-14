@@ -1,4 +1,14 @@
-Dietary Patterns, Circulating Metabolome, and Risk of Type 2 Diabetes
+Title: Dietary Patterns, Circulating Metabolome, and Risk of Type 2 Diabetes
+
+Sample data
+1. model_training_sample.Rdata: used for elastic net model training and initial testing
+
+2. signature_sample.RData: contain signature information, test sample for signature calculation, and annotation file
+
+3. t2d_sample: used for prospective analysis between dietary pattern scores and metabolomic signatures and type 2 diabetes
+
+4. micro_sample: used for microbiome data
+
 
 Code files in this repository covers the main analyses:
 1. Figure 2.R: Model training to develop metabolomic signatures for dietary patterns;
