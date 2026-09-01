@@ -37,16 +37,16 @@ Note: Individual-level data are not included in this repository because of data-
 
 
 ## 🧬 Main Analysis Code
-- `Figure 2.R`: Model training to develop metabolomic signatures for dietary patterns; Caculation of metabolomic signature; Pearson 
-   correlation between dietary pattern scores and metabolomic signatures; Count of metabolite subclass in each metabolomic signature.
+- `Figure 2.R`: Develop metabolomic signatures for dietary patterns using elastic net regression; Caculation of metabolomic signature in each study; Pearson 
+   correlation between dietary pattern scores and corresponding metabolomic signatures; Count of metabolite subclass in each metabolomic signature.
 
-- `Figure 3.R`: Feature of dietary metabolomic signatures.
+- `Figure 3.R`: Feature of dietary metabolomic signatures, including its coefficient from elastic net model, its association with corresponding metabolomic signatures using linear regression, and the association between composite metabolites and incident type 2 diabetes.
 
-- `Figure 4.R`: Association between dietary metabolomic signatures and incident type 2 diabetes and mediation analysis.
+- `Figure 4.R`: Association between dietary metabolomic signatures and incident type 2 diabetes using either cox or logistic regression model; Mediation analysis among dietary pattern scores, composite metabolites, and incident type 2 diabetes.
 
 - `Figure 5.Rmd`: Genetic correlation; TWAS analysis using FUSION; Two-sample MR analysis.
  
-- `Figure 6.R`: Identify species associated metabolomic signatures and composite metabolites; mediation analysis among dietary pattern scores, species, and corresponding metabolomic signatures.
+- `Figure 6.R`: Identify species associated metabolomic signatures and composite metabolites; Mediation analysis among dietary pattern scores, species, and corresponding metabolomic signatures.
 
 
 ## 💻 Environment & Dependencies
