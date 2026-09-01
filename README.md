@@ -46,7 +46,7 @@ Note: Individual-level data are not included in this repository because of data-
   
 4. Figure 5.Rmd: Two-sample MR analysis.
  
-5. Figure 6.R: Identify species asscoaited metabolomic signatures and mediation analysis.
+5. Figure 6.R: Identify species associated metabolomic signatures and mediation analysis.
 
 
 ## 💻 Environment & Dependencies
