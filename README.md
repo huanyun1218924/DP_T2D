@@ -44,7 +44,7 @@ Note: Individual-level data are not included in this repository because of data-
 
 - `Figure 4.R`: Association between dietary metabolomic signatures and incident type 2 diabetes using either cox or logistic regression model; Mediation analysis among dietary pattern scores, composite metabolites, and incident type 2 diabetes.
 
-- `Figure 5.Rmd`: Genetic correlation; TWAS analysis using FUSION; Two-sample MR analysis.
+- `Figure 5.Rmd`: Genetic heritability estimation using LDSC; TWAS analysis using FUSION; tissue-specific colocalization analysis; genetic correlation analysis; and two-sample Mendelian randomization analysis. Genetic analyses were primarily conducted using a Linux server.
  
 - `Figure 6.R`: Identify species associated metabolomic signatures and composite metabolites; Mediation analysis among dietary pattern scores, species, and corresponding metabolomic signatures.
 
