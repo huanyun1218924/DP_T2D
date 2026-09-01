@@ -1,9 +1,26 @@
 **Dietary Patterns, Circulating Metabolome, and Risk of Type 2 Diabetes**
 
 
-Overview:
+📌 **Overview**
 This repository contains the simulated sample data and main analysis code for a integrative study investigating the associations between diet, circulating metabolome in relation to incident type 2 diabetes. The analysis utilizes diet, metabolomics, genetics, metagenomics, and clinical phenotypes.
 
+📂 **Repository Structure**
+├── data/
+│   ├── model_training_sample.RData
+│   ├── signature_sample.RData
+│   ├── t2d_sample.RData
+│   ├── micro_sample.RData
+│
+├── code/
+│   ├── Figure 2.R
+│   ├── Figure 3.R
+│   ├── Figure 4.R
+│   ├── Figure 5.Rmd
+│   └── Figure 6.R
+│
+└── README.md
+
+Note: Individual-level data are not included in this repository because of data-use and participant confidentiality restrictions.
 
 Sample data:
 1. model_training_sample.Rdata: used for elastic net model training and initial testing
@@ -39,6 +56,9 @@ Visualization: ggplot2 (v3.5.1), ggpubr (v0.6.0), igraph (v2.1.2)
 Data Handling: Hmisc (v5.2.2), compositions (v2.0.8)
 
 
-Contact
-[Huan Yun/Department of Epidemiology, Harvard T.H. Chan School of Public Health]
-[huanyun@hsph.harvard.edu]
+📧 **Contact**
+
+For questions regarding the analysis or code, please contact:
+
+Huan Yun, Harvard T.H. Chan School of Public Health
+huanyun@hsph.harvard.edu
