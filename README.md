@@ -59,10 +59,10 @@ BLAS:   /app/R-4.3.3@i86-rhel9.0/lib64/R/lib/libRblas.so
 LAPACK: FlexiBLAS OPENBLAS-OPENMP;  LAPACK version 3.9.0
 
 The following core packages are required (full list available in the /functions folder):
-Data processing: tidyr_1.3.2 plyr_1.8.9 dplyr_1.2.0  data.table_1.18.2.1
-Model training: cvTools_0.3.3 glmnet_4.1-10
-Data analysis: survival_3.8-3 metafor_4.8-0 coxme_2.2-22 lmerTest_3.2-1 Maaslin2_1.16.0
-Visualization: ComplexHeatmap_2.25.3 RColorBrewer_1.1-3 circlize_0.4.15 gridExtra_2.3 ComplexHeatmap_2.25.3  circlize_0.4.15 venn_1.12  cowplot_1.2.0    
+- Data processing: tidyr_1.3.2 plyr_1.8.9 dplyr_1.2.0  data.table_1.18.2.1
+- Model training: cvTools_0.3.3 glmnet_4.1-10
+- Data analysis: survival_3.8-3 metafor_4.8-0 coxme_2.2-22 lmerTest_3.2-1 Maaslin2_1.16.0
+- Visualization: ComplexHeatmap_2.25.3 RColorBrewer_1.1-3 circlize_0.4.15 gridExtra_2.3 ComplexHeatmap_2.25.3  circlize_0.4.15 venn_1.12  cowplot_1.2.0    
 
 
 ## 📧 Contact
