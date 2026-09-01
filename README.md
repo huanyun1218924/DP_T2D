@@ -56,7 +56,7 @@ Note: Individual-level data are not included in this repository because of data-
 - BLAS:   `/app/R-4.3.3@i86-rhel9.0/lib64/R/lib/libRblas.so`
 - LAPACK: `v3.9`
 
-The following core packages are required (full list available in the /functions folder):
+The following core packages are required (full list available in each script):
 - **Data processing**: `tidyr_1.3.2`,    `plyr_1.8.9`,  `dplyr_1.2.0`,  `data.table_1.18.2.1`
 - **Model training**:  `cvTools_0.3.3`,  `glmnet_4.1-10`
 - **Data analysis**:   `survival_3.8-3`, `metafor_4.8-0`,  `coxme_2.2-22`,  `lmerTest_3.2-1`,  `Maaslin2_1.16.0`
