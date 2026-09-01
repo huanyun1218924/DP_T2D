@@ -27,13 +27,13 @@ Note: Individual-level data are not included in this repository because of data-
 ```
 
 ## 🔬 Simulated Sample Data
-- `model_training_sample.Rdata`: used for elastic net model training and initial testing
-
-- `signature_sample.RData`: contain signature information, test sample for signature calculation, and annotation file
+- `model_training_sample.Rdata`: used for elastic net model training and initial testing for developing dietary metabolomic signatures, with sample size and variable structure same with raw dataset
+  
+- `signature_sample.RData`: contain signature information, test sample for signature calculation, and metabolite annotation file
 
 - `t2d_sample`: used for prospective analysis between dietary pattern scores and metabolomic signatures and type 2 diabetes
 
-- `micro_sample`: used for microbiome analysis
+- `micro_sample`: used for microbiome analysis, with sample size and variable structure same with raw dataset
 
 
 ## 🧬 Main Analysis Code
