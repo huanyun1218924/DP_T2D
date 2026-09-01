@@ -4,12 +4,10 @@
 ## 📌 Overview
 
 This repository contains the simulated sample data and main analysis code for a integrative study investigating the associations between diet, circulating metabolome in relation to incident type 2 diabetes. The analysis utilizes diet, metabolomics, genetics, metagenomics, and clinical phenotypes.
-...
 
 
 ## 📂 Repository Structure
 
-```text
 ├── data/
 │   ├── model_training_sample.RData
 │   ├── signature_sample.RData
@@ -27,7 +25,8 @@ This repository contains the simulated sample data and main analysis code for a 
 
 Note: Individual-level data are not included in this repository because of data-use and participant confidentiality restrictions.
 
-## 🔬Sample data
+
+## 🔬 Sample data
 1. model_training_sample.Rdata: used for elastic net model training and initial testing
 
 2. signature_sample.RData: contain signature information, test sample for signature calculation, and annotation file
@@ -37,7 +36,7 @@ Note: Individual-level data are not included in this repository because of data-
 4. micro_sample: used for microbiome analysis
 
 
-##🧬Main analysis code
+## 🧬 Main analysis code
 1. Figure 2.R: Model training to develop metabolomic signatures for dietary patterns; Caculation of metabolomic signature; Pearson 
    correlation between dietary pattern scores and metabolomic signatures; Count of metabolite subclass in each metabolomic signature.
    
@@ -50,7 +49,7 @@ Note: Individual-level data are not included in this repository because of data-
 5. Figure 6.R: Identify species asscoaited metabolomic signatures and mediation analysis.
 
 
-##💻Environment & Dependencies
+## 💻 Environment & Dependencies
 #R version 4.3.3 (2024-02-29)
 #Platform: x86_64-pc-linux-gnu (64-bit)
 #Running under: Rocky Linux 9.7 (Blue Onyx)
@@ -66,7 +65,7 @@ The following core packages are required (full list available in the /functions 
 **Visualization**: ComplexHeatmap_2.25.3 RColorBrewer_1.1-3 circlize_0.4.15 gridExtra_2.3 ComplexHeatmap_2.25.3  circlize_0.4.15 venn_1.12  cowplot_1.2.0    
 
 
-##📧Contact
+## 📧 Contact
 For questions regarding the analysis or code, please contact:
 
 Huan Yun, Harvard T.H. Chan School of Public Health
