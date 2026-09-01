@@ -1,4 +1,4 @@
-**Dietary Patterns, Circulating Metabolome, and Risk of Type 2 Diabetes**
+# Dietary Patterns, Circulating Metabolome, and Risk of Type 2 Diabetes
 
 
 ## 📌 Overview
