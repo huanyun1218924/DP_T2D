@@ -66,5 +66,4 @@ The following core packages are required (full list available in the /functions 
 ## 📧 Contact
 For questions regarding the analysis or code, please contact:
 
-Huan Yun, Harvard T.H. Chan School of Public Health
-Email: huanyun@hsph.harvard.edu
+Huan Yun, Harvard T.H. Chan School of Public Health, huanyun@hsph.harvard.edu
