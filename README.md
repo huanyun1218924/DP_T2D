@@ -7,7 +7,7 @@ This repository contains the simulated sample data and main analysis code for a 
 
 
 ## 📂 Repository Structure
-
+```text
 ├── data/
 │   ├── model_training_sample.RData
 │   ├── signature_sample.RData
@@ -24,7 +24,7 @@ This repository contains the simulated sample data and main analysis code for a 
 └── README.md
 
 Note: Individual-level data are not included in this repository because of data-use and participant confidentiality restrictions.
-
+```
 
 ## 🔬 Sample data
 1. model_training_sample.Rdata: used for elastic net model training and initial testing
