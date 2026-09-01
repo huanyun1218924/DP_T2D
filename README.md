@@ -44,9 +44,9 @@ Note: Individual-level data are not included in this repository because of data-
 
 - `Figure 4.R`: Association between dietary metabolomic signatures and incident type 2 diabetes and mediation analysis.
 
-- `Figure 5.Rmd`: Genetic correlation; TWAS analysis; Two-sample MR analysis.
+- `Figure 5.Rmd`: Genetic correlation; TWAS analysis using FUSION; Two-sample MR analysis.
  
-- `Figure 6.R`: Identify species associated metabolomic signatures and mediation analysis.
+- `Figure 6.R`: Identify species associated metabolomic signatures and composite metabolites; mediation analysis among dietary pattern scores, species, and corresponding metabolomic signatures.
 
 
 ## 💻 Environment & Dependencies
