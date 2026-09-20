@@ -1,5 +1,4 @@
-# Dietary Patterns, Circulating Metabolome, and Risk of Type 2 Diabetes
-
+# Metabolomic signatures link dietary patterns to type 2 diabetes risk: an integrative multi-omics analysis
 
 ## 📌 Overview
 
