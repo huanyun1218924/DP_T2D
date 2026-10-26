@@ -1,5 +1,4 @@
-# Metabolomic signatures link dietary patterns to type 2 diabetes risk: an integrative multi-omics analysis
-
+# Metabolomic signatures link dietary patterns to type 2 diabetes risk
 ## 📌 Overview
 
 This repository contains the simulated sample data and main analysis code for a integrative study investigating the associations between diet, circulating metabolome in relation to incident type 2 diabetes. The analysis utilizes diet, metabolomics, genetics, metagenomics, and clinical phenotypes.
